@@ -13,15 +13,15 @@ def calculate_daily_roi():
     Tâche CRON quotidienne.
     Distribue les pourcentages de ROI (daily_roi_percentage) sur le solde des utilisateurs pour tous les investissements actifs.
     """
-    active_investments = Investment.objects.filter(status='ACTIVE').select_related('user', 'product')
+    active_investments = Investment.objects.filter(status='ACTIVE').select_related('user', 'tier')
     
     with transaction.atomic():
         for inv in active_investments:
             user = inv.user
-            product = inv.product
+            tier = inv.tier
             
             # Calcul du rendement du jour
-            daily_profit = (inv.amount_invested * product.daily_roi_percentage) / 100
+            daily_profit = inv.amount_invested * inv.daily_rate_snapshot
             
             # Vérification et Application du Booster
             from .models import UserBooster

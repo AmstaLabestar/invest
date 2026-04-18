@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
+User = get_user_model()
 from django.contrib import messages
 from django.http import JsonResponse
 import json
@@ -270,15 +271,19 @@ def withdraw_request(request):
             
             if amount < min_withdraw:
                 messages.error(request, f"Le montant minimum de retrait est de {min_withdraw:,.0f} XOF.".replace(',', ' '))
-            elif amount > request.user.balance:
-                messages.error(request, "Solde insuffisant pour ce retrait.")
             else:
                 with transaction.atomic():
-                    # Déduire le solde
-                    request.user.balance -= amount
-                    request.user.save(update_fields=['balance'])
+                    # Verrouillage de la ligne Utilisateur pour éviter le double-spend (Faille de course)
+                    safe_user = User.objects.select_for_update().get(id=request.user.id)
                     
-                    # Créer la transaction de Retrait
+                    if amount > safe_user.balance:
+                        messages.error(request, "Solde insuffisant pour ce retrait.")
+                    else:
+                        # Déduire le solde protégé
+                        safe_user.balance -= amount
+                        safe_user.save(update_fields=['balance'])
+                        
+                        # Créer la transaction de Retrait
                     tx_ref = f"RET-{request.user.id}-{uuid.uuid4().hex[:6].upper()}"
                     Transaction.objects.create(
                         user=request.user,
