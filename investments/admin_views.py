@@ -89,11 +89,7 @@ def process_transaction(request, tx_id, action):
             inv.start_date = timezone.now()
             inv.save()
             
-            # Application des points et bonus
-            points_gagnes = int(inv.amount_invested // 1000) * 10
-            tx.user.points += points_gagnes
-            tx.user.save(update_fields=['points'])
-            
+            # Application des points exclusifs au bonus de parrainage
             is_first_investment = Investment.objects.filter(user=tx.user, status='ACTIVE').count() == 1
             if is_first_investment and tx.user.sponsor and inv.amount_invested >= 10000:
                 tx.user.sponsor.points += 20
