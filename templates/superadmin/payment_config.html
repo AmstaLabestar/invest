@@ -1,0 +1,75 @@
+{% extends "base_superadmin.html" %}
+
+{% block top_title %}Mobile Money API{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div class="mb-4">
+        <a href="/superadmin/" class="text-sm" style="color: var(--sa-primary);"><i class="ph ph-arrow-left"></i> Retour au Panel</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
+            <h2 class="text-xl font-bold mb-6" style="color: #f97316;"><i class="ph-duotone ph-currency-circle-dollar"></i> Ajouter/Modifier une API</h2>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Fournisseur</label>
+                    {{ form.provider_name }}
+                </div>
+                
+                <div class="mb-4">
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Environnement</label>
+                    {{ form.environment }}
+                </div>
+
+                <div class="grid-2-col mb-4">
+                    <div>
+                        <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Clé Publique</label>
+                        {{ form.api_key }}
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Clé Secrète (Token)</label>
+                        {{ form.secret_key }}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">URL Webhook</label>
+                    {{ form.webhook_url }}
+                </div>
+                
+                <div class="mb-6">
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Activer la passerelle</label>
+                    {{ form.is_active }}
+                </div>
+
+                <button type="submit" class="btn" style="background-color: #f97316; color: white; padding: 0.6rem 1.5rem; border: none; border-radius: 0.25rem; font-weight: bold;">Enregistrer</button>
+            </form>
+        </div>
+        
+        <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
+            <h2 class="text-lg font-bold mb-4" style="color: var(--sa-text);">Fournisseurs Enregistrés</h2>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for p in providers %}
+                <div style="padding: 1rem; border: 1px solid var(--sa-border); border-radius: 0.5rem; background: var(--sa-hover);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <span class="font-bold" style="color: var(--sa-text);">{{ p.provider_name }}</span>
+                        {% if p.is_active %}
+                        <span class="text-xs font-bold" style="color: var(--sa-success-text);">ACTIF</span>
+                        {% else %}
+                        <span class="text-xs font-bold" style="color: var(--sa-danger-text);">INACTIF</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs mt-1" style="color: var(--sa-text-muted);">Env: {{ p.get_environment_display }}</p>
+                    <p class="text-xs mt-1" style="color: var(--sa-text-muted); font-family: monospace; filter: blur(3px);">Secret: {{ p.secret_key|truncatechars:10 }}...</p>
+                </div>
+                {% empty %}
+                <p class="text-sm text-center" style="color: var(--sa-text-muted);">Aucun fournisseur configuré.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

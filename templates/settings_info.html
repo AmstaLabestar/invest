@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Mes informations - InvestPlatform{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-8 pb-4" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <a href="{% url 'profile' %}" style="color: #9ca3af; text-decoration: none;">
+        <i class="ph ph-arrow-left" style="font-size: 1.5rem;"></i>
+    </a>
+    <h2 class="text-lg font-bold text-white m-0">Mes informations</h2>
+    <div style="width: 24px;"></div>
+</div>
+
+<form method="POST" action="{% url 'settings_info' %}">
+    {% csrf_token %}
+    
+    <div class="card card-dark mb-6" style="border-radius: 1rem; border: none; background-color: #111827; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.02);">
+        
+        <div class="mb-4">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2" style="display: block;">Prénom</label>
+            <input type="text" name="first_name" value="{{ user.first_name }}" 
+                   class="w-full" style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem; background-color: #0b1120; color: white; box-sizing: border-box;" 
+                   placeholder="Votre prénom">
+        </div>
+        
+        <div class="mb-4">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2" style="display: block;">Nom de Famille</label>
+            <input type="text" name="last_name" value="{{ user.last_name }}" 
+                   class="w-full" style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem; background-color: #0b1120; color: white; box-sizing: border-box;" 
+                   placeholder="Votre nom">
+        </div>
+        
+        <div class="mb-4">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2" style="display: block;">Adresse Email</label>
+            <input type="email" name="email" value="{{ user.email }}" 
+                   class="w-full" style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem; background-color: #0b1120; color: white; box-sizing: border-box;" 
+                   placeholder="Ex: contact@investplatform.com">
+        </div>
+        
+        <div class="mb-2">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2" style="display: block;">Numéro de Téléphone (Mobile Money)</label>
+            <input type="text" name="phone_number" value="{{ user.phone_number|default:'' }}" 
+                   class="w-full" style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem; background-color: #1e293b; opacity: 0.8; color: white; box-sizing: border-box; cursor: not-allowed;" 
+                   placeholder="+225 00 00 00 00" readonly>
+            <p class="text-xs mt-2 m-0" style="color: #ea580c; font-weight: bold;"><i class="ph-fill ph-warning"></i> Ce numéro est définitif et recevra vos retraits.</p>
+        </div>
+        
+    </div>
+
+    <button type="submit" class="btn" style="width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: bold; border-radius: 0.75rem; padding: 1rem; border: none; font-size: 1rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+        Sauvegarder les modifications
+    </button>
+</form>
+{% endblock %}

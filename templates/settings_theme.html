@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Couleur & Thème - InvestPlatform{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-8 pb-4" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <a href="{% url 'profile' %}" style="color: #9ca3af; text-decoration: none;">
+        <i class="ph ph-arrow-left" style="font-size: 1.5rem;"></i>
+    </a>
+    <h2 class="text-lg font-bold text-white m-0">Thème</h2>
+    <div style="width: 24px;"></div>
+</div>
+
+<p class="text-sm text-gray-400 mb-6">Personnalisez l'apparence de votre espace InvestPlatform. Le changement s'applique instantanément.</p>
+
+<div class="list-group">
+    
+    <!-- Theme Actuel : DARK -->
+    <div id="btn-theme-dark" onclick="setTheme('dark')" style="background-color: #111827; border: 2px solid #14b8a6; border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; position: relative; overflow: hidden; cursor: pointer; transition: all 0.3s;">
+        <div id="badge-dark" style="position: absolute; top: 0; right: 0; background-color: #14b8a6; color: #022c22; font-size: 0.65rem; font-weight: bold; padding: 0.2rem 0.75rem; border-bottom-left-radius: 0.5rem; text-transform: uppercase;">Actif</div>
+        
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <!-- Aperçu -->
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #0f172a, #1e293b); border: 2px solid #334155; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 20px; height: 2px; background-color: #14b8a6; border-radius: 2px;"></div>
+            </div>
+            
+            <div>
+                <h3 class="font-bold text-white m-0 text-md">Premium Dark Mode</h3>
+                <p class="text-xs text-gray-400 m-0 mt-1">Noir profond et touches Émeraude.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Theme : LIGHT -->
+    <div id="btn-theme-light" onclick="setTheme('light')" style="background-color: #0b1120; border: 1px dashed rgba(255,255,255,0.2); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; cursor: pointer; position: relative; transition: all 0.3s;">
+        <div id="badge-light" style="display: none; position: absolute; top: 0; right: 0; background-color: #3b82f6; color: white; font-size: 0.65rem; font-weight: bold; padding: 0.2rem 0.75rem; border-bottom-left-radius: 0.5rem; text-transform: uppercase;">Actif</div>
+        
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <!-- Aperçu -->
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 20px; height: 2px; background-color: #3b82f6; border-radius: 2px;"></div>
+            </div>
+            
+            <div>
+                <h3 class="font-bold text-white m-0 text-md">Light Mode</h3>
+                <p class="text-xs text-gray-400 m-0 mt-1">Clair et épuré. Version de jour.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateThemeUI() {
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        const darkBtn = document.getElementById('btn-theme-dark');
+        const lightBtn = document.getElementById('btn-theme-light');
+        const darkBadge = document.getElementById('badge-dark');
+        const lightBadge = document.getElementById('badge-light');
+
+        if (currentTheme === 'light') {
+            // Apply light styles
+            lightBtn.style.border = '2px solid #3b82f6';
+            lightBtn.style.opacity = '1';
+            lightBadge.style.display = 'block';
+            
+            darkBtn.style.border = '1px dashed rgba(255,255,255,0.2)';
+            darkBadge.style.display = 'none';
+        } else {
+            // Apply dark styles
+            darkBtn.style.border = '2px solid #14b8a6';
+            darkBadge.style.display = 'block';
+            
+            lightBtn.style.border = '1px dashed rgba(255,255,255,0.2)';
+            lightBadge.style.display = 'none';
+        }
+    }
+
+    function setTheme(themeName) {
+        localStorage.setItem('theme', themeName);
+        if (themeName === 'light') {
+            document.body.classList.add('theme-light');
+        } else {
+            document.body.classList.remove('theme-light');
+        }
+        updateThemeUI();
+    }
+
+    // Init UI on load
+    document.addEventListener('DOMContentLoaded', updateThemeUI);
+</script>
+{% endblock %}

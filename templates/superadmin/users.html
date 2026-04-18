@@ -1,0 +1,85 @@
+{% extends 'base_superadmin.html' %}
+
+{% block title %}SuperAdmin - Utilisateurs{% endblock %}
+{% block top_title %}Gestion des Utilisateurs{% endblock %}
+
+{% block content %}
+<div class="card p-0" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); overflow: hidden;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+            <i class="ph-duotone ph-users mr-2" style="color: var(--sa-primary);"></i> Tous les Inscrits
+        </h2>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span class="text-xs" style="color: var(--sa-text-muted);">Total : {{ users.count }}</span>
+            <a href="{% url 'admin_user_create' %}" class="btn" style="background: rgba(59,130,246,0.1); color: var(--sa-primary); border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold; border: none; padding: 0.5rem 1rem;">
+                <i class="ph-bold ph-plus mr-1"></i> Nouveau
+            </a>
+        </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+            <thead>
+                <tr style="background: var(--sa-hover); color: var(--sa-text-muted); text-transform: uppercase;">
+                    <th style="padding: 1rem;">Utilisateur</th>
+                    <th style="padding: 1rem;">Contact</th>
+                    <th style="padding: 1rem;">Solde Actuel</th>
+                    <th style="padding: 1rem;">Date Inscription</th>
+                    <th style="padding: 1rem;">Tuteur (Parrain)</th>
+                    <th style="padding: 1rem; text-align: center;">Statut</th>
+                    <th style="padding: 1rem; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr style="border-bottom: 1px solid var(--sa-border); color: var(--sa-text); {% if not u.is_active %}opacity: 0.5; background: var(--sa-danger-bg);{% endif %}">
+                    <td style="padding: 1rem; font-weight: bold;">
+                        {{ u.username }}
+                        {% if u.is_superuser %} <span style="background: rgba(168,85,247,0.2); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #c084fc; margin-left: 5px;">SUPERADMIN</span> {% endif %}
+                    </td>
+                    <td style="padding: 1rem; color: var(--sa-text-muted);">{{ u.phone_number|default:"Non fourni" }}<br><small>{{ u.email }}</small></td>
+                    <td style="padding: 1rem; color: #4ade80; font-weight: bold;">{{ u.balance|floatformat:0 }} XOF</td>
+                    <td style="padding: 1rem;">{{ u.date_joined|date:"d M Y" }}</td>
+                    <td style="padding: 1rem;">{{ u.sponsor.username|default:"-" }}</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if u.is_active %}
+                            <span style="color: var(--sa-success-text);"><i class="ph-duotone ph-check-circle"></i> Actif</span>
+                        {% else %}
+                            <span style="color: var(--sa-danger-text);"><i class="ph-duotone ph-x-circle"></i> Bloqué</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; text-align: right;">
+                        {% if not u.is_superuser %}
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <a href="{% url 'admin_user_edit' u.id %}" class="btn-icon" style="padding: 0.4rem 0.6rem; border-radius: 0.25rem; background: rgba(59,130,246,0.1); color: var(--sa-primary); display: flex; align-items: center; gap: 0.4rem; text-decoration: none; font-size: 0.75rem; font-weight: bold;" title="Modifier les infos">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> <span style="display: inline-block;">Éditer</span>
+                                </a>
+                                
+                                <form action="{% url 'admin_user_toggle' u.id %}" method="POST" style="margin:0;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-icon" style="padding: 0.4rem 0.6rem; border-radius: 0.25rem; display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: bold; border: none; cursor: pointer; {% if u.is_active %}background: var(--sa-danger-bg); color: var(--sa-danger-text);{% else %}background: var(--sa-success-bg); color: var(--sa-success-text);{% endif %}" title="{% if u.is_active %}Bloquer ce compte{% else %}Débloquer ce compte{% endif %}">
+                                        {% if u.is_active %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                        {% else %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                                        {% endif %}
+                                        <span style="display: inline-block;">{% if u.is_active %}Bloquer{% else %}Débloquer{% endif %}</span>
+                                    </button>
+                                </form>
+                                
+                                <form action="{% url 'admin_user_delete' u.id %}" method="POST" style="margin:0;" onsubmit="confirmAction(event, 'Souhaitez-vous supprimer ce profil définitivement de la plateforme ? Action irréversible.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-icon" style="padding: 0.4rem 0.6rem; border-radius: 0.25rem; background: var(--sa-danger-bg); color: var(--sa-danger-text); display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: bold; border: none; cursor: pointer;" title="Supprimer définitivement">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> <span style="display: inline-block;">Supprimer</span>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

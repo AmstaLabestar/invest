@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Aide & Support - InvestPlatform{% endblock %}
+
+{% block content %}
+<div class="flex-between mb-8 pb-4" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <a href="{% url 'profile' %}" style="color: #9ca3af; text-decoration: none;">
+        <i class="ph ph-arrow-left" style="font-size: 1.5rem;"></i>
+    </a>
+    <h2 class="text-lg font-bold text-white m-0">Aide & Support</h2>
+    <div style="width: 24px;"></div>
+</div>
+
+<!-- Option Contact Rapide -->
+<div style="background: linear-gradient(135deg, #f43f5e, #be123c); border-radius: 1rem; padding: 1.5rem; text-align: center; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(244, 63, 94, 0.2);">
+    <i class="ph-fill ph-headset" style="font-size: 3rem; color: white; margin-bottom: 1rem;"></i>
+    <h3 class="font-bold text-white m-0 mb-2">Besoin d'aide d'urgence ?</h3>
+    <p class="text-sm text-rose-100 m-0 mb-4">Notre conseiller clientèle est disponible sur WhatsApp 24/7.</p>
+    
+    <a href="https://wa.me/22500000000" target="_blank" style="display: inline-block; background-color: white; color: #be123c; font-weight: bold; border-radius: 999px; padding: 0.75rem 2rem; text-decoration: none; font-size: 0.95rem;">
+        <i class="ph-bold ph-whatsapp-logo" style="margin-right: 0.5rem; position: relative; top: 2px;"></i> Lancer le Chat
+    </a>
+</div>
+
+<!-- FAQ -->
+<h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Questions Fréquentes</h3>
+
+<div class="list-group">
+    
+    <div style="background-color: #111827; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; margin-bottom: 0.75rem;">
+        <h4 class="text-md font-bold text-white m-0 mb-2">Comment puis-je retirer mes gains ?</h4>
+        <p class="text-sm text-gray-400 m-0 leading-relaxed">Allez dans la section `Booster`, cliquez sur `Ramasser` et saisissez le montant. L'argent sera transféré sur votre numéro Mobile Money en 24h ouvrées.</p>
+    </div>
+    
+    <div style="background-color: #111827; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; margin-bottom: 0.75rem;">
+        <h4 class="text-md font-bold text-white m-0 mb-2">Le parrainage, comment ça marche ?</h4>
+        <p class="text-sm text-gray-400 m-0 leading-relaxed">Partagez votre Code depuis l'espace Booster. Dès qu'un filleul investit, il rejoint votre branche (Gauche ou Droite). Complétez l'objectif (ex: 5G/5D) pour obtenir des bonus cash exclusifs.</p>
+    </div>
+    
+    <div style="background-color: #111827; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; margin-bottom: 0.75rem;">
+        <h4 class="text-md font-bold text-white m-0 mb-2">À quoi servent les Boosters ?</h4>
+        <p class="text-sm text-gray-400 m-0 leading-relaxed">Un Booster permet de multiplier temporairement la vitesse ou le rendement de vos produits. Par exemple, un Booster x2 double vos ROI pendant une durée définie.</p>
+    </div>
+    
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base_superadmin.html" %}
+
+{% block top_title %}Paramètres Plateforme{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div class="mb-4">
+        <a href="/superadmin/" class="text-sm" style="color: var(--sa-primary);"><i class="ph ph-arrow-left"></i> Retour au Panel</a>
+    </div>
+
+    <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
+        <h2 class="text-xl font-bold mb-6" style="color: #fbbf24;"><i class="ph-duotone ph-gear"></i> Paramètres Généraux</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="grid-2-col mb-4">
+                <div>
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Mode Maintenance</label>
+                    {{ form.maintenance_mode }}
+                    <span class="text-xs ml-2" style="color: var(--sa-text-muted);">Bloque l'accès aux utilisateurs normaux</span>
+                </div>
+            </div>
+
+            <div class="grid-2-col mb-4">
+                <div>
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Frais d'inscription (XOF)</label>
+                    {{ form.registration_fee }}
+                </div>
+                <div>
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Retrait Minimum (XOF)</label>
+                    {{ form.min_withdrawal }}
+                </div>
+            </div>
+
+            <div class="grid-2-col mb-6">
+                <div>
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Bonus Parrainage (Niveau 1) %</label>
+                    {{ form.sponsor_bonus_level_1 }}
+                </div>
+                <div>
+                    <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Bonus Parrainage (Niveau 2) %</label>
+                    {{ form.sponsor_bonus_level_2 }}
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="text-xs font-bold block mb-2" style="color: var(--sa-text-muted);">Taux de Rendement Global par Défaut (%)</label>
+                {{ form.default_roi_percentage }}
+            </div>
+
+            <button type="submit" class="btn" style="background-color: #f59e0b; color: white; padding: 0.6rem 1.5rem; border: none; border-radius: 0.25rem; font-weight: bold;">Sauvegarder les Paramètres</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}InvestPlatform{% endblock %}</title>
+    
+    <!-- Premium Design System CSS -->
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=reloaded_v5">
+    
+    <!-- Theme Initializer -->
+    <script>
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('theme-light');
+            window.addEventListener('DOMContentLoaded', () => {
+                document.body.classList.add('theme-light');
+            });
+        }
+    </script>
+    
+    <!-- Phosphor Icons (Chargement CSS direct anti-bloqueur publicitaire) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.min.css">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.8/sweetalert2.all.min.js"></script>
+    
+    <!-- Alpine.js pour la réactivité frontend sans lourdeur -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.5/cdn.min.js"></script>
+</head>
+<body x-data="{ sidebarOpen: false }">
+    
+    <!-- Top Mobile Header -->
+    <header class="top-header" style="justify-content: space-between;">
+        <div class="flex-row">
+            <span class="header-title text-xl" style="font-weight: bold;">InvestPlatform</span>
+        </div>
+        <div class="flex-row" style="gap: 1.25rem;">
+            <!-- Notification Bell -->
+            <a href="{% url 'notifications' %}" style="position: relative; display: flex; align-items: center; text-decoration: none;">
+                <span style="font-size: 1.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">🔔</span>
+                {% if request.user.is_authenticated and request.user.unread_notifications_count > 0 %}
+                <span style="position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; background-color: #f43f5e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">{{ request.user.unread_notifications_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="container mt-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <a href="{% url 'home' %}" class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}" title="Accueil">
+            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">🏠</div>
+            <span style="{% if request.resolver_match.url_name == 'home' %}color: #10b981; font-weight: bold;{% endif %}">Home</span>
+        </a>
+        <a href="{% url 'trade' %}" class="nav-item {% if request.resolver_match.url_name == 'trade' %}active{% endif %}" title="Investissements">
+            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">📈</div>
+            <span>Trade</span>
+        </a>
+        <a href="{% url 'booster' %}" class="nav-item {% if request.resolver_match.url_name == 'booster' %}active{% endif %}" title="Boosters de rendement">
+            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">🚀</div>
+            <span>Booster</span>
+        </a>
+        <a href="{% url 'profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" title="Mon Profil">
+            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">👤</div>
+            <span>Profile</span>
+        </a>
+    </nav>
+    
+    </nav>
+    
+    <!-- Django Messages -> SweetAlert Toast -->
+    {% if messages %}
+    <script>
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#1e293b',
+            color: '#fff'
+        });
+        {% for message in messages %}
+            Toast.fire({
+                icon: "{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}success{% endif %}",
+                title: "{{ message|escapejs }}"
+            });
+        {% endfor %}
+    </script>
+    {% endif %}
+
+</body>
+</html>

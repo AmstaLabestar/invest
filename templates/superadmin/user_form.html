@@ -1,0 +1,56 @@
+{% extends 'base_superadmin.html' %}
+
+{% block title %}SuperAdmin - {{ title }}{% endblock %}
+{% block top_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card p-0" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); overflow: hidden; max-width: 800px; margin: 0 auto;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+            <i class="ph-duotone ph-user-gear mr-2" style="color: var(--sa-primary);"></i> {% if is_create %}Nouveau Compte{% else %}Édition du Compte{% endif %}
+        </h2>
+        <a href="{% url 'admin_users' %}" class="text-xs" style="color: var(--sa-text-muted); text-decoration: underline;">Retour à la liste</a>
+    </div>
+    
+    <div style="padding: 1.5rem;">
+        <form method="POST" autocomplete="off">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div style="background: var(--sa-danger-bg); border-left: 4px solid var(--sa-danger-text); padding: 1rem; margin-bottom: 1rem;">
+                <p style="color: var(--sa-danger-text); margin: 0; font-size: 0.85rem; font-weight: bold;">Veuillez corriger les erreurs ci-dessous.</p>
+                <ul style="color: var(--sa-danger-text); font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.8;">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                {% for field in form %}
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label for="{{ field.id_for_label }}" style="color: var(--sa-text-muted); font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small style="color: var(--sa-text-muted); font-size: 0.75rem;">{{ field.help_text }}</small>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                <a href="{% url 'admin_users' %}" class="btn" style="background: var(--sa-hover); color: var(--sa-text); padding: 0.6rem 1.5rem; text-align: center; font-weight: bold;">Annuler</a>
+                <button type="submit" class="btn" style="background: var(--sa-primary); color: white; padding: 0.6rem 1.5rem; border: none; font-weight: bold; box-shadow: 0 4px 15px rgba(59,130,246,0.3);">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

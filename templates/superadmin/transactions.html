@@ -1,0 +1,69 @@
+{% extends 'base_superadmin.html' %}
+
+{% block title %}SuperAdmin - Transactions{% endblock %}
+{% block top_title %}Journal des Transactions{% endblock %}
+
+{% block content %}
+<div class="card p-0" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); overflow: hidden;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+            <i class="ph-duotone ph-swap mr-2" style="color: #06b6d4;"></i> Historique Complet
+        </h2>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+            <thead>
+                <tr style="background: var(--sa-hover); color: var(--sa-text-muted); text-transform: uppercase;">
+                    <th style="padding: 1rem;">ID</th>
+                    <th style="padding: 1rem;">Date</th>
+                    <th style="padding: 1rem;">Utilisateur</th>
+                    <th style="padding: 1rem;">Type & Canal</th>
+                    <th style="padding: 1rem;">Montant</th>
+                    <th style="padding: 1rem; text-align: center;">Statut</th>
+                    <th style="padding: 1rem; text-align: right;">Action Manuelle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr style="border-bottom: 1px solid var(--sa-border); color: var(--sa-text);">
+                    <td style="padding: 1rem; color: var(--sa-text-muted);">#{{ tx.id }}</td>
+                    <td style="padding: 1rem;">{{ tx.created_at|date:"d M Y - H:i" }}</td>
+                    <td style="padding: 1rem; font-weight: bold;">{{ tx.user.username }}</td>
+                    <td style="padding: 1rem;">
+                        {% if tx.tx_type == 'DEPOSIT' %}<span style="color: #3b82f6;"><i class="ph-bold ph-arrow-down"></i> Dépôt</span>
+                        {% elif tx.tx_type == 'WITHDRAWAL' %}<span style="color: #ef4444;"><i class="ph-bold ph-arrow-up"></i> Retrait</span>
+                        {% else %}<span style="color: #a855f7;">{{ tx.get_tx_type_display }}</span>{% endif %}
+                        <br><small style="color: var(--sa-text-muted);">{{ tx.provider|default:"-" }} / {{ tx.tx_reference|default:"-" }}</small>
+                    </td>
+                    <td style="padding: 1rem; font-weight: bold; color: #fbbf24;">{{ tx.amount|floatformat:0 }} XOF</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if tx.status == 'SUCCESS' %}
+                            <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: var(--sa-success-bg); color: var(--sa-success-text); font-size: 0.75rem; font-weight: bold;">VALIDÉ</span>
+                        {% elif tx.status == 'PENDING' %}
+                            <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: rgba(245,158,11,0.1); color: #f59e0b; font-size: 0.75rem; font-weight: bold;">EN ATTENTE</span>
+                        {% else %}
+                            <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: var(--sa-danger-bg); color: var(--sa-danger-text); font-size: 0.75rem; font-weight: bold;">ÉCHOUÉ</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; text-align: right;">
+                        {% if tx.status == 'PENDING' %}
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <a href="{% url 'process_transaction' tx.id 'approve' %}" onclick="confirmAction(event, 'Approuver cette transaction ? Les fonds virtuels seront crédités.', this.href)" class="btn-icon" style="background: var(--sa-success-bg); color: var(--sa-success-text); padding: 0.4rem 0.6rem; border-radius: 0.25rem;" title="Approuver"><i class="ph-duotone ph-check"></i></a>
+                                <a href="{% url 'process_transaction' tx.id 'reject' %}" onclick="confirmAction(event, 'Rejeter cette demande ? Cette transaction sera marquée comme échouée.', this.href)" class="btn-icon" style="background: var(--sa-danger-bg); color: var(--sa-danger-text); padding: 0.4rem 0.6rem; border-radius: 0.25rem;" title="Rejeter"><i class="ph-duotone ph-x"></i></a>
+                            </div>
+                        {% else %}
+                            <span style="color: var(--sa-text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="padding: 2rem; text-align: center; color: var(--sa-text-muted);">Aucune transaction trouvée.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

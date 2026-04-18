@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Connexion - InvestPlatform</title>
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=reloaded_v6">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('theme-light');
+            window.addEventListener('DOMContentLoaded', () => { document.body.classList.add('theme-light'); });
+        }
+    </script>
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 2rem;">
+
+
+
+    <div style="text-align: center; margin-bottom: 3rem;">
+        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%); border-radius: 20px; margin: 0 auto 1.5rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);">
+            <i class="ph-bold ph-chart-line-up text-white" style="font-size: 2.5rem;"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white m-0">Re-bonjour</h1>
+        <p class="text-gray-400 mt-2">Connectez-vous pour accéder à votre espace InvestPlatform.</p>
+    </div>
+
+    <form method="POST" action="{% url 'login' %}" style="max-width: 400px; width: 100%; margin: 0 auto;">
+        {% csrf_token %}
+        
+        {% if error %}
+        <div style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; text-align: center;">
+            <span class="text-red-500 font-medium text-sm">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <div class="mb-4">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2" style="display: block;">Identifiant de connexion</label>
+            <div style="position: relative;">
+                <i class="ph-fill ph-user text-gray-500" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; pointer-events: none; z-index: 10;"></i>
+                <input type="text" name="username" required placeholder="Pseudo, Téléphone ou Email" 
+                       style="box-sizing: border-box; position: relative; z-index: 5; width: 100%; background-color: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem 1rem 1rem 3rem; color: white; font-size: 1rem; outline: none; transition: all 0.2s;"
+                       onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.2)';"
+                       onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none';">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2" style="display: flex; justify-content: space-between;">
+                Mot de passe
+            </label>
+            <div style="position: relative;">
+                <i class="ph-fill ph-lock-key text-gray-500" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; pointer-events: none; z-index: 10;"></i>
+                <input type="password" name="password" required placeholder="••••••••" 
+                       style="box-sizing: border-box; position: relative; z-index: 5; width: 100%; background-color: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem 1rem 1rem 3rem; color: white; font-size: 1rem; outline: none; transition: all 0.2s;"
+                       onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.2)';"
+                       onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.boxShadow='none';">
+            </div>
+        </div>
+
+        <button type="submit" style="width: 100%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">
+            Se connecter <i class="ph-bold ph-arrow-right"></i>
+        </button>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <p class="text-gray-400 text-sm">Nouveau sur InvestPlatform ?</p>
+            <a href="{% url 'register' %}" class="text-emerald font-bold" style="text-decoration: none; display: inline-block; margin-top: 0.5rem;">Créer un compte maintenant</a>
+        </div>
+    </form>
+
+</body>
+</html>

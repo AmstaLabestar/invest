@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+{% block title %}Booster - InvestPlatform{% endblock %}
+
+{% block content %}
+<div class="mb-10" style="padding-bottom: 2rem;">
+    <!-- Boosters Disponibles -->
+    <div class="flex-between mb-4 mt-2">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest m-0">BOOSTERS DISPONIBLES</h3>
+    </div>
+
+    <div class="list-group mb-8">
+        {% for b in boosters %}
+        <div class="card card-dark" style="border-radius: 1rem; border: none; background-color: #111827; margin-bottom: 0.75rem; padding: 1.25rem; border: 1px solid rgba(255,255,255,0.02);">
+            <div class="flex-between">
+                <div class="flex-row" style="align-items: center; gap: 1rem;">
+                    {% if forloop.counter == 1 %}
+                    <span style="font-size: 1.5rem;">⚡</span>
+                    {% elif forloop.counter == 2 %}
+                    <span style="font-size: 1.5rem;">🚀</span>
+                    {% else %}
+                    <span style="font-size: 1.5rem;">🔥</span>
+                    {% endif %}
+                    <div>
+                        <p class="font-bold text-white text-md tracking-wide mb-1">{{ b.name }}</p>
+                        <p class="text-xs text-gray-400">Rendement x{{ b.multiplier }} • {{ b.price|floatformat:0 }} XOF</p>
+                    </div>
+                </div>
+                <div>
+                    <form method="POST" action="{% url 'booster' %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="booster_id" value="{{ b.id }}">
+                        <button type="submit" class="btn" style="background-color: #10b981; color: #022c22; padding: 0.4rem 1.25rem; font-size: 0.75rem; font-weight: 800; border-radius: 12px; letter-spacing: 0.5px; border: none; cursor: pointer; transition: 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">ACTIVER</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Le client ne voulant aucune donnée fictive, visuel robuste si vide -->
+        <div class="empty-state" style="background-color: #111827; border-radius: 1rem; border: 1px dashed rgba(255,255,255,0.1); padding: 2.5rem 1rem; text-align: center; margin-bottom: 2rem;">
+            <i class="ph ph-rocket-launch text-gray-500" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; display: inline-block;"></i>
+            <p class="text-sm text-gray-400 m-0">Aucun booster n'est disponible dans la base de données actuellement.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="gap: 0.75rem; margin-bottom: 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+        <div onclick="window.location.href='{% url 'trade' %}'" class="card card-dark flex" style="flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 1rem; background-color: #0b1120; border: 1px solid rgba(16, 185, 129, 0.4); padding: 1rem 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">💰</div>
+            <p class="font-bold text-white mb-1" style="font-size: 0.95rem;">INVESTIR</p>
+            <p class="text-xs text-emerald m-0">Débiter Compte</p>
+        </div>
+        <div onclick="openWithdrawModal()" class="card card-dark flex" style="flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 1rem; background-color: #0b1120; border: 1px solid rgba(14, 165, 233, 0.4); padding: 1rem 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">🏦</div>
+            <p class="font-bold text-white mb-1" style="font-size: 0.95rem;">RAMASSER</p>
+            <p class="text-xs" style="color: #38bdf8; margin: 0;">Retrait express</p>
+        </div>
+    </div>
+
+    <!-- Parrainage Binaire (TRUE DATA) -->
+    <div class="flex-between mb-4">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest m-0">PARRAINAGE BINAIRE</h3>
+    </div>
+
+    <div class="card card-dark" style="border-radius: 1rem; border: none; background-color: #111827; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.03);">
+        <!-- Ligne Code -->
+        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1.25rem; padding-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <span class="text-xs text-gray-400 uppercase tracking-wide font-bold">Votre Lien d'Invitation</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.25); padding: 0.75rem 0.5rem 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02); overflow: hidden;">
+                <span class="font-bold text-emerald" style="font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 0.5rem;">{{ referral_code }}</span>
+                <button onclick="navigator.clipboard.writeText('{{ referral_code }}'); Swal.fire({toast:true, position:'top', icon:'success', title:'Code copié !', showConfirmButton:false, timer:2000, background:'#1e293b', color:'#fff'});" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; border-radius: 8px; padding: 0.4rem 0.6rem; cursor: pointer; display: flex; align-items: center; gap:0.25rem; font-size: 0.75rem; font-weight: bold; transition: 0.2s; flex-shrink: 0;">
+                    <i class="ph-bold ph-copy"></i> Copier
+                </button>
+            </div>
+        </div>
+        
+        <p class="text-sm text-gray-400 font-medium mb-4">Arbre actuel</p>
+        
+        <!-- Graphique d'arbre hyper-stable -->
+        <div class="flex" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="background: rgba(139, 92, 246, 0.15); padding: 0.5rem 1.5rem; border-radius: 999px; border: 1px solid rgba(139, 92, 246, 0.3); display: inline-flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.1rem;">👤</span> <span class="text-white font-bold text-sm">Moi</span>
+            </div>
+            
+            <!-- Lien visuel (barre verticale) -->
+            <div style="height: 1.5rem; width: 2px; background-color: rgba(255,255,255,0.1);"></div>
+            <!-- Ligne horizontale -->
+            <div style="width: 70%; height: 2px; background-color: rgba(255,255,255,0.1); position: relative;">
+                <!-- Tiges vers le bas -->
+                <div style="position: absolute; left: 0; top: 0; width: 2px; height: 1rem; background-color: rgba(255,255,255,0.1);"></div>
+                <div style="position: absolute; right: 0; top: 0; width: 2px; height: 1rem; background-color: rgba(255,255,255,0.1);"></div>
+            </div>
+            
+            <div class="flex-between" style="width: 90%; margin-top: 1rem; padding-bottom: 1rem;">
+                <div style="text-align: center;">
+                    <p class="font-bold text-white mb-1" style="font-size: 0.95rem;">GAUCHE</p>
+                    <p class="text-xs text-gray-400">{{ left_count }} / {{ target_leg }}</p>
+                    <p class="text-xs text-gray-500 mt-1" style="font-style: italic;">{{ left_count }} filleuls</p>
+                </div>
+                <div style="text-align: center;">
+                    <p class="font-bold text-white mb-1" style="font-size: 0.95rem;">DROITE</p>
+                    <p class="text-xs text-gray-400">{{ right_count }} / {{ target_leg }}</p>
+                    <p class="text-xs text-gray-500 mt-1" style="font-style: italic;">{{ right_count }} filleuls</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objectif barre -->
+        <div class="mt-4 pt-4" style="border-top: 1px solid rgba(255,255,255,0.05);">
+            <div class="flex-between mb-3 text-sm">
+                <span class="text-gray-300 font-medium">Bonus équipe {{ target_leg }}G + {{ target_leg }}D</span>
+                <span class="text-gray-300 font-bold">{{ bonus_progress_percent }}%</span>
+            </div>
+            
+            <div class="progress-track" style="height: 8px; background: #1e293b; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; width: 100%;">
+                <div style="width: {{ bonus_progress_percent }}%; height: 100%; border-radius: 10px; background: linear-gradient(90deg, #eab308, #10b981, #06b6d4);"></div>
+            </div>
+            
+            <div style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 0.5rem; padding: 0.75rem;">
+                <p class="text-xs text-yellow-500 font-medium m-0 text-center" style="line-height: 1.4;">Complétez votre équipe pour débloquer 25 000 XOF de bonus !</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulaire caché de retrait -->
+<form id="withdrawForm" method="POST" action="{% url 'withdraw_request' %}">
+    {% csrf_token %}
+    <input type="hidden" name="amount" id="withdraw_amount">
+    <input type="hidden" name="provider" id="withdraw_provider">
+    <input type="hidden" name="phone" id="withdraw_phone">
+</form>
+
+<script>
+function openWithdrawModal() {
+    const userPhone = "{{ user.phone_number|escapejs }}";
+    
+    Swal.fire({
+        title: 'Demande de Retrait',
+        html: `
+            <style>
+                .provider-card {
+                    background-color: #1f2937;
+                    border: 2px solid transparent;
+                    border-radius: 0.75rem;
+                    padding: 0.5rem;
+                    cursor: pointer;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.5rem;
+                    transition: all 0.2s;
+                }
+                .provider-card:hover {
+                    background-color: #374151;
+                }
+                .provider-card.selected {
+                    border-color: #10b981;
+                    background-color: rgba(16, 185, 129, 0.1);
+                }
+                .provider-logo {
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    border-radius: 10px;
+                }
+                /* Inputs Styling in SweetAlert */
+                .swal-input-dark {
+                    width: 100%;
+                    background-color: #111827 !important;
+                    border: 1px solid #374151 !important;
+                    color: white !important;
+                    border-radius: 0.5rem;
+                    padding: 0.75rem;
+                    font-size: 0.9rem;
+                    outline: none;
+                    box-sizing: border-box;
+                }
+                .swal-input-dark:focus {
+                    border-color: #10b981 !important;
+                    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+                }
+            </style>
+            <div style="text-align: left; margin-top: 10px; display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Solde -->
+                <div style="background-color: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: 0.75rem; text-align: center;">
+                    <label style="font-size: 0.75rem; color: #10b981 !important; font-weight: bold; margin-bottom: 4px; display: block; letter-spacing: 1px;">VOTRE SOLDE DISPONIBLE</label>
+                    <div style="font-size: 1.75rem; font-weight: 900; color: white !important;">{{ user.balance|floatformat:0 }} XOF</div>
+                    {% if pending_withdrawals and pending_withdrawals != 0 %}
+                    <div style="font-size: 0.75rem; color: #f59e0b; margin-top: 6px; font-weight: bold;">
+                       <i class="ph-duotone ph-lock"></i> + {{ pending_withdrawals }} XOF réservé(s) en attente
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Options -->
+                <div>
+                    <label style="font-size: 0.75rem; color: #9ca3af !important; font-weight: bold; margin-bottom: 8px; display: block;">MÉTHODE DE RÉCEPTION</label>
+                    
+                    <div style="font-size: 0.65rem; color: #4b5563; font-weight: 900; letter-spacing: 1px; margin-bottom: 6px;">MOBILE MONEY</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+                        <div class="provider-card selected" onclick="selectSwalProvider('Wave Mobile Money', this, 'MM')">
+                            <div class="provider-logo" style="background-color: #1fcfff;"><span style="color: white !important; font-weight: 900; font-size: 18px;">W</span></div>
+                            <div style="font-size: 0.75rem; font-weight: bold; color: white !important;">Wave</div>
+                        </div>
+                        <div class="provider-card" onclick="selectSwalProvider('Orange Money', this, 'MM')">
+                            <div class="provider-logo" style="background-color: black;"><div style="background-color: #ff7900; width: 18px; height: 18px;"></div></div>
+                            <div style="font-size: 0.75rem; font-weight: bold; color: white !important;">Orange</div>
+                        </div>
+                        <div class="provider-card" onclick="selectSwalProvider('MTN Mobile Money', this, 'MM')">
+                            <div class="provider-logo" style="background-color: #ffcc00; border-radius: 50% !important;"><span style="color: #000 !important; font-family: Arial; font-weight: 900; font-size: 10px; letter-spacing: -0.5px;">MTN</span></div>
+                            <div style="font-size: 0.75rem; font-weight: bold; color: white !important;">MTN</div>
+                        </div>
+                        <div class="provider-card" onclick="selectSwalProvider('Moov Money', this, 'MM')">
+                            <div class="provider-logo" style="background-color: #005aa9;"><span style="color: #ff6600 !important; font-family: Arial; font-weight: 900; font-size: 9px;">moov</span></div>
+                            <div style="font-size: 0.75rem; font-weight: bold; color: white !important;">Moov</div>
+                        </div>
+                    </div>
+
+                    <div class="font-size: 0.65rem; color: #4b5563; font-weight: 900; letter-spacing: 1px; margin-bottom: 6px;">CRYPTOMONNAIES</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                        <div class="provider-card" onclick="selectSwalProvider('Binance (BNB)', this, 'CRYPTO')">
+                            <div class="provider-logo" style="background-color: #F3BA2F;"><span style="color: #000 !important; font-weight: 900; font-size: 11px;">BNB</span></div>
+                            <div style="font-size: 0.75rem; font-weight: bold; color: white !important;">Binance</div>
+                        </div>
+                        <div class="provider-card" onclick="selectSwalProvider('Solana (SOL)', this, 'CRYPTO')">
+                            <div class="provider-logo" style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);"><span style="color: white !important; font-weight: 900; font-size: 11px;">SOL</span></div>
+                            <div style="font-size: 0.75rem; font-weight: bold; color: white !important;">Solana</div>
+                        </div>
+                        <div class="provider-card" onclick="selectSwalProvider('Ethereum (ETH)', this, 'CRYPTO')">
+                            <div class="provider-logo" style="background-color: #627EEA;"><span style="color: white !important; font-weight: 900; font-size: 11px;">ETH</span></div>
+                            <div style="font-size: 0.75rem; font-weight: bold; color: white !important;">Ethereum</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Cachés -->
+                <input type="hidden" id="swal-provider" value="Wave Mobile Money">
+                <input type="hidden" id="swal-type" value="MM">
+
+                <!-- Dynamic Address/Phone Logic -->
+                <div id="swal-mm-container">
+                    <label style="font-size: 0.75rem; color: #9ca3af !important; font-weight: bold; margin-bottom: 4px; display: block;">NUMÉRO DE RÉCEPTION (NON MODIFIABLE)</label>
+                    <div style="width: 100%; background-color: #111827 !important; border: 1px solid #374151 !important; color: #9ca3af !important; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.9rem; cursor: not-allowed;"><i class="ph-fill ph-lock-key"></i> ${userPhone}</div>
+                </div>
+
+                <div id="swal-crypto-container" style="display: none;">
+                    <label style="font-size: 0.75rem; color: #9ca3af; font-weight: bold; margin-bottom: 4px; display: block;">ADRESSE DU PORTEFEUILLE COMPLET</label>
+                    <input type="text" id="swal-crypto-address" style="width: 100%; background-color: #111827 !important; border: 1px solid #374151 !important; color: white !important; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.9rem; outline: none; box-sizing: border-box;" placeholder="Collez votre code d'adresse ici">
+                </div>
+
+                <!-- Montant -->
+                <div style="margin-top: 0.25rem;">
+                    <label style="font-size: 0.75rem; color: #9ca3af; font-weight: bold; margin-bottom: 4px; display: block;">MONTANT À RETIRER (XOF)</label>
+                    <input type="number" id="swal-amount" style="width: 100%; background-color: #111827 !important; border: 1px solid #374151 !important; color: white !important; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.9rem; outline: none; box-sizing: border-box;" placeholder="Ex: 5000" min="100">
+                </div>
+            </div>
+        `,
+        background: '#1f2937',
+        color: '#fff',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#4b5563',
+        reverseButtons: true,
+        customClass: {
+            popup: 'rounded-2xl border border-gray-700',
+            confirmButton: 'rounded-xl font-bold px-6 py-2',
+            cancelButton: 'rounded-xl font-medium px-6 py-2'
+        },
+        preConfirm: () => {
+            const amount = document.getElementById('swal-amount').value;
+            const provider = document.getElementById('swal-provider').value;
+            const type = document.getElementById('swal-type').value;
+            
+            let phone = '';
+            if (type === 'CRYPTO') {
+                phone = document.getElementById('swal-crypto-address').value;
+                if (!phone) {
+                    Swal.showValidationMessage('Veuillez renseigner votre adresse de portefeuille crypto');
+                    return false;
+                }
+            } else {
+                phone = userPhone;
+            }
+
+            if (!amount || amount <= 0) {
+                Swal.showValidationMessage('Veuillez entrer un montant valide');
+                return false;
+            }
+
+            return { amount: amount, provider: provider, phone: phone }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('withdraw_amount').value = result.value.amount;
+            document.getElementById('withdraw_provider').value = result.value.provider;
+            document.getElementById('withdraw_phone').value = result.value.phone;
+            document.getElementById('withdrawForm').submit();
+        }
+    });
+}
+
+function selectSwalProvider(providerName, element, type) {
+    document.getElementById('swal-provider').value = providerName;
+    document.getElementById('swal-type').value = type;
+    
+    // Toggle Active Class
+    const cards = document.querySelectorAll('.provider-card');
+    cards.forEach(card => card.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    // Toggle Inputs visibility based on Provider Type
+    if (type === 'CRYPTO') {
+        document.getElementById('swal-mm-container').style.display = 'none';
+        document.getElementById('swal-crypto-container').style.display = 'block';
+    } else {
+        document.getElementById('swal-mm-container').style.display = 'block';
+        document.getElementById('swal-crypto-container').style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

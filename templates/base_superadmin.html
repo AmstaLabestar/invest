@@ -1,0 +1,352 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel Directeur - InvestPlatform{% endblock %}</title>
+    
+    <!-- Premium Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Premium Design System CSS -->
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=superadmin">
+    
+    <!-- Phosphor Icons (Chargement CSS direct anti-bloqueur publicitaire) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.min.css">
+    
+    <!-- SweetAlert2 (Notifications & Modals Pro) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --sa-bg: #0f172a;
+            --sa-sidebar-bg: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+            --sa-topbar-bg: rgba(15, 23, 42, 0.9);
+            --sa-card-bg: rgba(15, 23, 42, 0.4);
+            --sa-border: rgba(255,255,255,0.05);
+            --sa-text: #f8fafc;
+            --sa-text-muted: #94a3b8;
+            --sa-hover: rgba(255,255,255,0.03);
+            --sa-primary: #3b82f6;
+            --sa-success-bg: rgba(34,197,94,0.1);
+            --sa-success-text: #22c55e;
+            --sa-danger-bg: rgba(239,68,68,0.1);
+            --sa-danger-text: #ef4444;
+            --sa-avatar-bg: #1e293b;
+            --sa-logo-grad: linear-gradient(90deg, #ffffff, #94a3b8);
+            --sa-swal-bg: #0f172a;
+            --sa-swal-text: #f8fafc;
+        }
+
+        html.theme-light {
+            --sa-bg: #f8fafc;
+            --sa-sidebar-bg: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            --sa-topbar-bg: rgba(255, 255, 255, 0.9);
+            --sa-card-bg: #ffffff;
+            --sa-border: rgba(0,0,0,0.08);
+            --sa-text: #0f172a;
+            --sa-text-muted: #475569;
+            --sa-hover: rgba(0,0,0,0.04);
+            --sa-primary: #2563eb;
+            --sa-success-bg: rgba(34,197,94,0.15);
+            --sa-success-text: #16a34a;
+            --sa-danger-bg: rgba(239,68,68,0.15);
+            --sa-danger-text: #dc2626;
+            --sa-avatar-bg: #e2e8f0;
+            --sa-logo-grad: linear-gradient(90deg, #0f172a, #2563eb);
+            --sa-swal-bg: #ffffff;
+            --sa-swal-text: #0f172a;
+        }
+
+        body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; margin: 0; padding: 0; background-color: var(--sa-bg); color: var(--sa-text); transition: background-color 0.3s, color 0.3s; }
+        body { margin: 0; padding: 0; background-color: var(--bg-dark); color: var(--text-light); }
+        .sa-layout { display: flex; height: 100vh; overflow: hidden; }
+        .sa-sidebar {
+            width: 260px;
+            background: var(--sa-sidebar-bg);
+            border-right: 1px solid var(--sa-border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 50;
+        }
+        .sa-main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--sa-bg);
+        }
+        .sa-topbar {
+            height: 70px;
+            border-bottom: 1px solid var(--sa-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            background: var(--sa-topbar-bg);
+            backdrop-filter: blur(12px);
+            flex-shrink: 0;
+            z-index: 40;
+        }
+        .sa-content {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .sa-logo {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--sa-text);
+            border-bottom: 1px solid var(--sa-border);
+        }
+        .sa-menu {
+            padding: 1rem 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .sa-menu-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--sa-text-muted);
+            font-weight: 800;
+            padding: 1rem 1.5rem 0.5rem;
+        }
+        .sa-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: var(--sa-text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            gap: 1rem;
+            border-left: 3px solid transparent; 
+            margin-bottom: 0.2rem; 
+        }
+        .sa-menu-item i { font-size: 1.2rem; color: var(--sa-text-muted); transition: all 0.2s ease; }
+        .sa-menu-item:hover { background: var(--sa-hover); color: var(--sa-text); }
+        .sa-menu-item:hover i { color: var(--sa-primary); }
+        .sa-menu-item.active {
+            background: var(--sa-hover);
+            color: var(--sa-primary);
+            border-left: 3px solid var(--sa-primary);
+        }
+        .sa-menu-item.active i { color: var(--sa-primary); }
+        
+        /* RESPONSIVITE MOBILE */
+        .sa-mobile-toggle { display: none; background: transparent; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .sa-overlay { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); z-index: 45; }
+        @media (max-width: 768px) {
+            .sa-sidebar { position: fixed; left: -260px; height: 100vh; transition: left 0.3s ease; }
+            .sa-sidebar.open { left: 0; }
+            .sa-overlay.open { display: block; }
+            .sa-topbar { padding: 0 1rem; }
+            .sa-mobile-toggle { display: block; }
+            .sa-secondary-grid { grid-template-columns: 1fr !important; }
+        }
+        
+        /* Grid Helpers */
+        .sa-secondary-grid {
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 1.5rem;
+        }
+        @media (max-width: 1024px) {
+            .sa-secondary-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="sa-layout">
+        <!-- SIDEBAR -->
+        <aside class="sa-sidebar">
+            <div class="sa-logo">
+                <i class="ph-duotone ph-shield-check mr-2 text-2xl" style="color: var(--sa-primary);"></i>
+                <span class="tracking-wide" style="background: var(--sa-logo-grad); background-clip: text; -webkit-background-clip: text; color: transparent; font-size: 1.1rem;">ADMINISTRATION</span>
+            </div>
+            <div class="sa-menu">
+                <div class="sa-menu-label">Principal</div>
+                
+                {% if request.user.is_superuser %}
+                <a href="{% url 'superadmin_dashboard' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+                    <i class="ph-duotone ph-squares-four"></i> Vue d'ensemble
+                </a>
+                <a href="{% url 'manager_dashboard' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}">
+                    <i class="ph-duotone ph-currency-circle-dollar"></i> Suivi Financier (Manager)
+                </a>
+                
+                <div class="sa-menu-label">Administration</div>
+                <a href="{% url 'admin_users' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="ph-duotone ph-users"></i> Gestion Utilisateurs
+                </a>
+                <a href="{% url 'admin_transactions' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_transactions' %}active{% endif %}">
+                    <i class="ph-duotone ph-swap"></i> Transactions
+                </a>
+                <a href="{% url 'admin_products' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_products' %}active{% endif %}">
+                    <i class="ph-duotone ph-package"></i> Produits & Boosters
+                </a>
+                
+                <div class="sa-menu-label">Configuration</div>
+                <a href="{% url 'admin_settings' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_settings' %}active{% endif %}">
+                    <i class="ph-duotone ph-gear"></i> Paramètres Globaux
+                </a>
+                <a href="{% url 'admin_payment_config' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_payment_config' %}active{% endif %}">
+                    <i class="ph-duotone ph-currency-circle-dollar"></i> API Mobile Money
+                </a>
+                
+                <div class="sa-menu-label">Système</div>
+                <a href="/admin/" class="sa-menu-item">
+                    <i class="ph-duotone ph-database"></i> Base de données brute
+                </a>
+                {% else %}
+                <a href="{% url 'manager_dashboard' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}">
+                    <i class="ph-duotone ph-currency-circle-dollar"></i> Suivi Financier
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="sa-user-box mt-auto p-4" style="border-top: 1px solid var(--sa-border); display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: var(--sa-avatar-bg); color: var(--sa-primary); flex-shrink: 0;">
+                    {{ request.user.username|make_list|first|upper }}
+                </div>
+                <div style="flex-grow: 1; overflow: hidden;">
+                    <div style="font-weight: 700; font-size: 0.875rem; color: var(--sa-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ request.user.username }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--sa-success-text); display: flex; align-items: center; gap: 0.25rem; margin-top: 0.1rem;">
+                        <span style="display: inline-block; width: 6px; height: 6px; background-color: var(--sa-success-text); border-radius: 50%;"></span>
+                        En ligne
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <div class="sa-overlay" id="sa-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- MAIN AREA -->
+        <main class="sa-main">
+            <!-- TOPBAR -->
+            <header class="sa-topbar">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="sa-mobile-toggle" onclick="toggleSidebar()" style="color: var(--sa-text);">
+                        <i class="ph ph-list"></i>
+                    </button>
+                    <div class="font-bold text-lg" style="color: var(--sa-text);">
+                        {% block top_title %}Tableau de Bord{% endblock %}
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <button onclick="toggleTheme()" title="Changer le thème" style="padding: 0 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap:0.4rem; background: var(--sa-card-bg); color: var(--sa-text); border-radius: 0.5rem; border: 1px solid var(--sa-text-muted); cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg> <span style="font-size: 0.75rem; font-weight: bold;">Thème</span>
+                    </button>
+                    <a href="/" target="_blank" title="Voir le site public" style="padding: 0 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap:0.4rem; background: var(--sa-card-bg); color: var(--sa-text); border-radius: 0.5rem; border: 1px solid var(--sa-text-muted); cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-decoration: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> <span style="font-size: 0.75rem; font-weight: bold;">Site Public</span>
+                    </a>
+                    <a href="{% url 'logout' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0 1rem; height: 38px; background: var(--sa-danger-bg); color: var(--sa-danger-text); border-radius: 0.5rem; font-weight: 700; font-size: 0.875rem; border: none; text-decoration: none; transition: 0.2s;">
+                        <i class="ph-bold ph-power text-lg"></i>
+                        <span>Déconnexion</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- DYNAMIC CONTENT -->
+            <div class="sa-content">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Restauration du thème au chargement
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('theme-light');
+            document.body.classList.add('theme-light');
+            document.getElementById('theme-icon').classList.replace('ph-moon', 'ph-sun');
+        }
+
+        function toggleTheme() {
+            const isLight = document.documentElement.classList.toggle('theme-light');
+            document.body.classList.toggle('theme-light');
+            
+            const icon = document.getElementById('theme-icon');
+            if (isLight) {
+                icon.classList.replace('ph-moon', 'ph-sun');
+                localStorage.setItem('theme', 'light');
+            } else {
+                icon.classList.replace('ph-sun', 'ph-moon');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.sa-sidebar').classList.toggle('open');
+            document.getElementById('sa-overlay').classList.toggle('open');
+        }
+
+        // Configuration Globale SweetAlert2 pour les Modales de confirmation
+        function confirmAction(event, textMessage, href = null) {
+            event.preventDefault();
+            const targetElement = event.currentTarget || event.target.closest('form');
+            Swal.fire({
+                title: 'Êtes-vous sûr ?',
+                text: textMessage,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#3b82f6',
+                confirmButtonText: 'Affirmatif',
+                cancelButtonText: 'Annuler',
+                background: getComputedStyle(document.documentElement).getPropertyValue('--sa-swal-bg').trim() || '#0f172a',
+                color: getComputedStyle(document.documentElement).getPropertyValue('--sa-swal-text').trim() || '#f8fafc',
+                border: '1px solid var(--sa-border)',
+                backdrop: `rgba(0,0,0,0.6)`
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (href) {
+                        window.location.href = href;
+                    } else if (targetElement && targetElement.tagName === 'FORM') {
+                        targetElement.submit();
+                    }
+                }
+            })
+        }
+    </script>
+
+    <!-- Gestion automatique des notifications Django via Toasts -->
+    {% if messages %}
+    <script>
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            background: getComputedStyle(document.documentElement).getPropertyValue('--sa-swal-bg').trim() || '#1e293b',
+            color: getComputedStyle(document.documentElement).getPropertyValue('--sa-swal-text').trim() || '#f8fafc'
+        });
+        
+        {% for message in messages %}
+            Toast.fire({
+                icon: "{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}success{% endif %}",
+                title: "{{ message|escapejs }}"
+            });
+        {% endfor %}
+    </script>
+    {% endif %}
+</body>
+</html>

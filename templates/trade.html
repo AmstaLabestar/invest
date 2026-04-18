@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% block title %}Plateforme de Trading - InvestPlatform{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<div x-data="tradingInterface()" x-init="initChart()" class="mb-6">
+    <!-- Sélecteur d'Actifs (Top Bar) -->
+    <div class="asset-selector mb-3" style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; width: 100%; -ms-overflow-style: none; scrollbar-width: none;">
+        {% for t in tiers %}
+        <button @click="selectTier({{ t.id }}, '{{ t.name|escapejs }}', parseInt({{ t.min_amount|stringformat:'s' }}), parseFloat({{ t.daily_rate|stringformat:'s' }}))" 
+                :class="{'asset-btn-active': activeTierId == {{ t.id }} }" 
+                class="asset-btn text-sm font-bold" 
+                style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); white-space: nowrap; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #cbd5e1;">{{ t.name }}</span> <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">{{ t.badge|default:'🌟' }}</span>
+        </button>
+        {% empty %}
+        <div class="text-gray-500 text-sm">Aucun palier disponible.</div>
+        {% endfor %}
+    </div>
+
+    <!-- MAIN PLATFORM AREA (Split Chart / Controls) -->
+    <div class="platform-grid" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+        
+        <!-- Left: Dynamic Chart Area -->
+        <div class="chart-area" style="flex: 1 1 60%; background-color: #080c17; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); padding: 1rem; position: relative; min-height: 400px; display: flex; flex-direction: column; box-shadow: inset 0 0 40px rgba(0,0,0,0.5);">
+            
+            <div style="position: absolute; top: 1.5rem; left: 1.5rem; z-index: 10;">
+                <h3 x-text="activeTierName" style="margin: 0; font-size: 1.8rem; color: #fff; font-weight: 800; letter-spacing: 0.5px;"></h3>
+                <p style="color: #10b981; font-weight: bold; margin: 0; font-size: 0.9rem;" x-text="'+' + (activeTierROI * 100).toFixed(2) + '% journalier'"></p>
+            </div>
+            
+            <!-- Target line indicator -->
+            <div style="position: absolute; width: 100%; height: 1px; background: rgba(16, 185, 129, 0.2); top: 50%; left: 0; z-index: 1; pointer-events: none; border-bottom: 1px dashed rgba(16, 185, 129, 0.4);"></div>
+            
+            <div style="flex: 1; position: relative; z-index: 5;">
+                <canvas id="tradingChart" style="width: 100%; height: 100%;"></canvas>
+            </div>
+        </div>
+
+        <!-- Right: Order Panel -->
+        <div class="control-panel" style="flex: 1 1 30%; background-color: #111827; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+            
+            <form method="POST" id="investForm" style="display: flex; flex-direction: column; height: 100%; justify-content: flex-end; gap: 1rem; margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="tier_id" :value="activeTierId">
+                
+                <div style="display: flex; gap: 0.75rem; align-items: stretch; margin-bottom: 1rem;">
+                    <!-- Input Montant Wrapper -->
+                    <div style="flex: 1; background-color: rgba(30, 41, 59, 0.3); border: 1px solid #1e293b; border-radius: 8px; padding: 0.75rem; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box;">
+                        <span style="color: #64748b; font-size: 0.65rem; font-weight: bold; margin-bottom: 0.4rem; display: block; text-transform: uppercase;">MISE MINIMUM</span>
+                        <div style="display: flex; align-items: baseline; gap: 0.3rem;">
+                            <span style="color: #fff; font-size: 1.15rem; font-weight: 900;" x-text="formatMoney(activeTierMin)"></span>
+                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: bold;">XOF</span>
+                        </div>
+                        <input type="hidden" name="amount" :value="activeTierMin">
+                    </div>
+
+                    <!-- Bloc Profit Wrapper -->
+                    <div style="flex: 1; background-color: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 0.75rem; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box;">
+                        <span style="color: #94a3b8; font-size: 0.65rem; font-weight: bold; margin-bottom: 0.4rem; display: block; text-transform: uppercase;">PROFIT (24H)</span>
+                        <div style="display: flex; align-items: baseline; gap: 0.3rem;">
+                            <span style="color: #10b981; font-size: 1.15rem; font-weight: 900;" x-text="'+' + calculateExpected() + ' XOF'"></span>
+                            <span style="color: #10b981; font-size: 0.75rem; font-weight: bold; opacity: 0.8;" x-text="'(+' + (activeTierROI * 100).toFixed(2) + '%)'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: stretch; margin-bottom: 0.5rem;">
+                    <!-- Réseau / Provider -->
+                    <div style="flex: 1;">
+                        <label style="color: #64748b; font-size: 0.65rem; font-weight: bold; margin-bottom: 0.4rem; display: block; text-transform: uppercase;">Moyen de Paiement</label>
+                        <select name="provider" required style="width: 100%; background-color: rgba(30, 41, 59, 0.3); border: 1px solid #1e293b; border-radius: 8px; padding: 0.75rem; color: #fff; font-family: inherit; font-size: 0.9rem; outline: none; appearance: auto;">
+                            <option value="Orange Money">Orange Money</option>
+                            <option value="Moov Money">Moov Money</option>
+                            <option value="Wave">Wave</option>
+                        </select>
+                    </div>
+                    <!-- Numéro -->
+                    <div style="flex: 1;">
+                        <label style="color: #64748b; font-size: 0.65rem; font-weight: bold; margin-bottom: 0.4rem; display: block; text-transform: uppercase;">Numéro Mobile</label>
+                        <div style="display: flex; background-color: rgba(30, 41, 59, 0.3); border: 1px solid #1e293b; border-radius: 8px; overflow: hidden; align-items: stretch;">
+                            <span style="background-color: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.75rem 0.6rem; font-weight: bold; font-size: 0.9rem; border-right: 1px solid #1e293b; display: flex; align-items: center; justify-content: center;">+226</span>
+                            <input type="tel" name="phone" required placeholder="50 00 00 00" pattern="[0-9]{8}" maxlength="8" style="width: 100%; background-color: transparent; border: none; padding: 0.75rem; color: #fff; font-family: inherit; font-size: 0.9rem; outline: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Giant BUY / CALL button -->
+                <button type="submit" class="btn-call" style="background-color: #10b981; color: #022c22; font-size: 1.15rem; font-weight: 900; padding: 1rem; border-radius: 8px; border: none; cursor: pointer; width: 100%; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);">
+                    <i class="ph-bold ph-trend-up" style="font-size: 1.5rem;"></i>
+                    <span style="letter-spacing: 1px;">INVESTIR (ACHAT)</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Mes Investissements Actifs (Portfolio) -->
+    <div class="flex-between mb-4" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
+        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="ph-duotone ph-briefcase"></i> MON PORTFEUILLE D'ACTIFS</div>
+    </div>
+
+    <div class="list-group mb-8">
+        {% for inv in active_investments %}
+        <div class="card card-dark flex-between" style="border-radius: 0.75rem; border: none; background-color: #111827; margin-bottom: 0.5rem; padding: 1rem 1.25rem; border: 1px solid rgba(255,255,255,0.02);">
+            
+            <div style="flex: 1;">
+                <span class="font-bold text-white tracking-wide block mb-1" style="font-size: 0.95rem;">{{ inv.tier.name }}</span>
+                <div class="text-xs text-gray-500">Ouvert depuis {{ inv.days_passed }} jours</div>
+            </div>
+            
+            <div style="text-align: right; flex: 1;">
+                <div class="text-sm font-bold text-white mb-1">{{ inv.amount_invested|floatformat:0 }} XOF</div>
+                <div class="text-xs text-gray-400">Position Initiale</div>
+            </div>
+            
+            <div style="text-align: right; flex: 1;">
+                <div class="text-sm font-bold text-emerald mb-1">+{{ inv.accumulated_gains|floatformat:0 }} XOF</div>
+                <div class="text-xs text-emerald" style="opacity: 0.8;">PNL (Profits)</div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="background-color: #111827; border-radius: 1rem; border: 1px dashed rgba(255,255,255,0.05); padding: 2.5rem 1rem; text-align: center;">
+            <i class="ph-duotone ph-chart-line-up text-gray-600 mb-2" style="font-size: 2.5rem; display: block;"></i>
+            <p class="text-sm text-gray-400 m-0">Aucune position ouverte sur le marché.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- CSS local spécifique à l'interface de trading -->
+<style>
+.asset-selector::-webkit-scrollbar { display: none; }
+.asset-btn { background-color: #0f172a; }
+.asset-btn:hover { background-color: #1e293b; }
+.asset-btn-active { background-color: rgba(16, 185, 129, 0.1) !important; border-color: rgba(16, 185, 129, 0.3) !important; box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.1); }
+   
+/* Remove up/down spinners on number input */
+.trade-input::-webkit-outer-spin-button, .trade-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.trade-input { -moz-appearance: textfield; }
+
+.trade-input:focus { border-color: #10b981 !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+.btn-call:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important; background-color: #059669 !important; color: white !important;}
+
+@media (max-width: 768px) {
+    .platform-grid { flex-direction: column; }
+    .chart-area { min-height: 250px; }
+}
+</style>
+
+<!-- Logique d'animation et de contrôle via Alpine -->
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('tradingInterface', () => ({
+        activeTierId: null,
+        activeTierName: '',
+        activeTierMin: 0,
+        activeTierROI: 0,
+        amount: 0,
+        chartInstance: null,
+        tickInterval: null,
+        
+        initChart() {
+            let initialized = false;
+            {% for t in tiers %}
+            if(!initialized) {
+                let t_id = parseInt("{{ t.id }}");
+                let t_name = "{{ t.name|escapejs }}";
+                let t_min = parseInt("{{ t.min_amount|stringformat:'s' }}");
+                let t_roi = parseFloat("{{ t.daily_rate|stringformat:'s' }}");
+                this.selectTier(t_id, t_name, t_min, t_roi);
+                initialized = true;
+            }
+            {% endfor %}
+            
+            // Build Chart.js instance (Real-time imitation)
+            const canvas = document.getElementById('tradingChart');
+            if(!canvas) return; // Sécurité si le front ne charge pas
+            const ctx = canvas.getContext('2d');
+            
+            // Linear Gradient filled under the line
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+            gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+            
+            // Generate some random initial baseline data
+            let currentPrice = 1.05000;
+            const dataPts = [];
+            for(let i=0; i<40; i++) {
+                currentPrice = currentPrice + (Math.random() - 0.48) * 0.005;
+                dataPts.push(currentPrice);
+            }
+            
+            this.chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(40).fill(''),
+                    datasets: [{
+                        data: dataPts,
+                        borderColor: '#10b981',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: '#fff',
+                        fill: true,
+                        tension: 0.1 // Ligne plus stricte style trading
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 }, // Animation à 0 pour éviter un effet "élastique" sur les ticks constants
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { 
+                            enabled: true,
+                            intersect: false,
+                            mode: 'index',
+                            callbacks: {
+                                label: function(context) { return context.parsed.y.toFixed(5); }
+                            }
+                        } 
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { 
+                            position: 'right', 
+                            grid: { color: 'rgba(255,255,255,0.02)', tickLength: 0 }, 
+                            ticks: { 
+                                font: { family: 'Courier New', size: 10, weight: 'bold' }, 
+                                color: '#64748b',
+                                callback: function(value) { return value.toFixed(5); }
+                            },
+                            border: { display: false }
+                        }
+                    },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+            
+            // Loop Tick (Boucle d'animation pour simuler un WebSocket)
+            this.tickInterval = setInterval(() => {
+                if(!this.chartInstance) return;
+                const ds = this.chartInstance.data.datasets[0];
+                const lastVal = ds.data[ds.data.length - 1];
+                // Fluctuations très légères
+                const newVal = lastVal + (Math.random() - 0.48) * 0.002;
+                ds.data.push(newVal);
+                ds.data.shift();
+                
+                this.chartInstance.update();
+            }, 800);
+        },
+        
+        selectTier(id, name, min, roi) {
+            this.activeTierId = id;
+            this.activeTierName = name;
+            this.activeTierMin = min;
+            this.activeTierROI = roi;
+            
+            // Auto ajustement du montant s'il est trop bas
+            if(!this.amount || this.amount < min) {
+                this.amount = min;
+            }
+            
+            // "Jump" le graphique pour donner l'impression qu'on charge un nouvel actif
+            if(this.chartInstance) {
+                let currentPrice = Math.random() * 5 + 0.5; // Scalaire aléatoire
+                const dataPts = [];
+                for(let i=0; i<40; i++) {
+                    currentPrice = currentPrice + (Math.random() - 0.48) * (currentPrice * 0.005);
+                    dataPts.push(currentPrice);
+                }
+                this.chartInstance.data.datasets[0].data = dataPts;
+                this.chartInstance.update();
+            }
+        },
+        
+        formatMoney(val) {
+            return Number(val || 0).toLocaleString('fr-FR');
+        },
+        
+        calculateExpected() {
+            if(!this.amount || !this.activeTierROI) return "0";
+            let expected = (this.amount * this.activeTierROI).toFixed(0);
+            return this.formatMoney(expected);
+        }
+    }));
+});
+</script>
+
+{% endblock %}
