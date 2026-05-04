@@ -266,6 +266,8 @@ def withdraw_request(request):
         
         try:
             amount = Decimal(str(amount_str))
+            if amount <= 0:
+                raise ValueError("Withdrawal amount must be positive")
             settings = SystemSettings.objects.first()
             min_withdraw = settings.min_withdrawal if settings else Decimal('5000')
             
@@ -278,6 +280,8 @@ def withdraw_request(request):
                     
                     if amount > safe_user.balance:
                         messages.error(request, "Solde insuffisant pour ce retrait.")
+                        next_url = request.META.get('HTTP_REFERER', 'booster')
+                        return redirect(next_url)
                     else:
                         # Déduire le solde protégé
                         safe_user.balance -= amount
@@ -287,7 +291,7 @@ def withdraw_request(request):
                     tx_ref = f"RET-{request.user.id}-{uuid.uuid4().hex[:6].upper()}"
                     Transaction.objects.create(
                         user=request.user,
-                        tx_type='WITHDRAWAL',
+                        tx_type=Transaction.TransactionType.WITHDRAWAL,
                         amount=amount,
                         status='PENDING',
                         provider=f"{provider} ({phone})",
