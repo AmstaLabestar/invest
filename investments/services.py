@@ -25,8 +25,6 @@ class CalculationService:
             daily_rate = float(investment.daily_rate_snapshot)
         elif investment.tier:
             daily_rate = float(investment.tier.daily_rate)
-        elif investment.product:
-            daily_rate = float(investment.product.daily_roi_percentage) / 100.0
         else:
             daily_rate = 0.0
             
