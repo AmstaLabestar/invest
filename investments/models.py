@@ -3,27 +3,28 @@ from django.conf import settings
 
 User = settings.AUTH_USER_MODEL
 
+
 class InvestmentTier(models.Model):
     name = models.CharField(max_length=50, verbose_name="Nom (ex: Bronze, Argent)")
     level = models.IntegerField(unique=True, verbose_name="Niveau")
-    badge = models.CharField(max_length=50, blank=True, null=True, verbose_name="Emoji Badge (ex: 🥉)")
-    
+    badge = models.CharField(max_length=50, blank=True, null=True, verbose_name="Emoji Badge (ex: medal)")
+
     min_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Montant Minimum")
     max_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Montant Maximum")
-    
+
     daily_rate = models.DecimalField(max_digits=5, decimal_places=4, verbose_name="Taux journalier (ex: 0.012 = 1.2%)")
     monthly_rate = models.DecimalField(max_digits=5, decimal_places=4, verbose_name="Taux mensuel (ex: 0.36 = 36%)")
-    
-    cycle_days = models.IntegerField(verbose_name="Durée du cycle (jours)")
-    
+
+    cycle_days = models.IntegerField(verbose_name="Duree du cycle (jours)")
+
     badge_color = models.CharField(max_length=7, blank=True, null=True, verbose_name="Couleur Hexbadge")
     icon = models.CharField(max_length=50, blank=True, null=True, verbose_name="Icone CSS")
-    
+
     advantages = models.JSONField(default=list, blank=True, verbose_name="Avantages (JSON)")
-    
+
     is_active = models.BooleanField(default=True, verbose_name="Est actif")
     display_order = models.IntegerField(default=0, verbose_name="Ordre d'affichage")
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -34,7 +35,7 @@ class InvestmentTier(models.Model):
 
     def __str__(self):
         return f"Niveau {self.level} - {self.name} ({self.min_amount} XOF)"
-        
+
     @property
     def daily_rate_percentage(self):
         """Retourne le taux sous forme de pourcentage (ex: 1.50)"""
@@ -46,23 +47,22 @@ class InvestmentTier(models.Model):
     def get_tier_by_amount(cls, amount):
         from django.db.models import Q
         return cls.objects.filter(
-            Q(min_amount__lte=amount) & 
+            Q(min_amount__lte=amount) &
             (Q(max_amount__gte=amount) | Q(max_amount__isnull=True)),
             is_active=True
         ).order_by('-level').first()
-
 
 
 class Investment(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'En attente de paiement'),
         ('ACTIVE', 'Actif'),
-        ('COMPLETED', 'Terminé'),
+        ('COMPLETED', 'Termine'),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='investments')
     tier = models.ForeignKey(InvestmentTier, on_delete=models.SET_NULL, null=True, blank=True)
     amount_invested = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Montant Investi")
-    daily_rate_snapshot = models.DecimalField(max_digits=5, decimal_places=4, default=0.0, verbose_name="Taux journalier figé")
+    daily_rate_snapshot = models.DecimalField(max_digits=5, decimal_places=4, default=0.0, verbose_name="Taux journalier fige")
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
@@ -78,11 +78,11 @@ class Investment(models.Model):
 
     @property
     def accumulated_gains(self):
-        # Utilisation de la nouvelle formule des intérêts composés
+        # Utilisation de la nouvelle formule des interets composes
         rate = float(self.daily_rate_snapshot) if self.daily_rate_snapshot else (float(self.tier.daily_rate) if self.tier else 0)
         capital = float(self.amount_invested)
         days = self.days_passed
-        # Capital × (1 + Taux_Journalier)^Jours - Capital
+        # Capital x (1 + Taux_Journalier)^Jours - Capital
         gain_total = capital * ((1 + rate) ** days)
         return gain_total - capital
 
@@ -90,20 +90,22 @@ class Investment(models.Model):
         tier_name = self.tier.name if self.tier else "Inconnu"
         return f"{self.user} - Palier {tier_name} ({self.amount_invested})"
 
+
 class Transaction(models.Model):
-    TX_TYPE_CHOICES = [
-        ('PAY_INVEST', 'Achat de Palier (Checkout)'),
-        ('WITHDRAWAL', 'Retrait'),
-        ('ROI', 'Gains Rendement'),
-        ('BONUS', 'Bonus Parrainage'),
-    ]
+    class TransactionType(models.TextChoices):
+        PAY_INVEST = ('PAY_INVEST', 'Achat de Palier (Checkout)')
+        BOOSTER = ('BOOSTER', 'Achat de Booster')
+        WITHDRAWAL = ('WITHDRAWAL', 'Retrait')
+        ROI = ('ROI', 'Gains Rendement')
+        BONUS = ('BONUS', 'Bonus Parrainage')
+
     STATUS_CHOICES = [
         ('PENDING', 'En attente'),
-        ('SUCCESS', 'Validé'),
-        ('FAILED', 'Échoué'),
+        ('SUCCESS', 'Valide'),
+        ('FAILED', 'Echoue'),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
-    tx_type = models.CharField(max_length=15, choices=TX_TYPE_CHOICES)
+    tx_type = models.CharField(max_length=15, choices=TransactionType.choices)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     provider = models.CharField(max_length=255, blank=True, help_text="CinetPay, Orange Money, Crypto Wallet...")
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
@@ -118,11 +120,12 @@ class Transaction(models.Model):
     def __str__(self):
         return f"{self.get_tx_type_display()} - {self.amount} XOF - {self.user}"
 
+
 class Booster(models.Model):
     name = models.CharField(max_length=100, verbose_name="Nom du Booster (Ex: Speed Boost x1.5)")
     multiplier = models.DecimalField(max_digits=4, decimal_places=2, verbose_name="Multiplicateur (Ex: 1.5)")
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Prix d'achat (XOF)")
-    duration_days = models.IntegerField(default=1, verbose_name="Durée (Jours)")
+    duration_days = models.IntegerField(default=1, verbose_name="Duree (Jours)")
     is_active = models.BooleanField(default=True, verbose_name="Actif")
     icon = models.CharField(max_length=50, blank=True, null=True, help_text="Ex: ph-rocket")
 
@@ -132,6 +135,7 @@ class Booster(models.Model):
 
     def __str__(self):
         return f"{self.name} (x{self.multiplier})"
+
 
 class UserBooster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='boosters')
@@ -147,27 +151,30 @@ class UserBooster(models.Model):
     def __str__(self):
         return f"{self.user} - {self.booster.name}"
 
+
 class SystemSettings(models.Model):
     maintenance_mode = models.BooleanField(default=False, verbose_name="Mode Maintenance")
     registration_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Frais d'inscription (XOF)")
-    default_roi_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.5, verbose_name="Taux de rendement global par défaut (%)")
+    default_roi_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.5, verbose_name="Taux de rendement global par defaut (%)")
     sponsor_bonus_level_1 = models.DecimalField(max_digits=5, decimal_places=2, default=5.0, verbose_name="Bonus Parrainage Niveau 1 (%)")
     sponsor_bonus_level_2 = models.DecimalField(max_digits=5, decimal_places=2, default=2.0, verbose_name="Bonus Parrainage Niveau 2 (%)")
     min_withdrawal = models.DecimalField(max_digits=10, decimal_places=2, default=5000, verbose_name="Retrait Minimum (XOF)")
 
     def __str__(self):
-        return "Paramètres Généraux de la Plateforme"
+        return "Parametres Generaux de la Plateforme"
+
 
 class PaymentConfig(models.Model):
     provider_name = models.CharField(max_length=50, unique=True, verbose_name="Nom du Fournisseur (ex: CinetPay)")
     is_active = models.BooleanField(default=True, verbose_name="Activer ce moyen de paiement")
-    api_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="Clé API Publique")
-    secret_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="Clé API Secrète / Token")
+    api_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="Cle API Publique")
+    secret_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="Cle API Secrete / Token")
     environment = models.CharField(max_length=50, choices=[('TEST', 'Sandbox / Test'), ('PROD', 'Production')], default='TEST')
     webhook_url = models.URLField(blank=True, null=True, verbose_name="URL de Webhook")
 
     def __str__(self):
         return f"Configuration {self.provider_name} ({self.environment})"
+
 
 class AuditLog(models.Model):
     INFO = 'INFO'
@@ -179,7 +186,7 @@ class AuditLog(models.Model):
         (CRITICAL, 'Critique'),
     ]
     admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
-    action = models.CharField(max_length=255, verbose_name="Action effectuée")
+    action = models.CharField(max_length=255, verbose_name="Action effectuee")
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="Adresse IP")
     severity = models.CharField(max_length=15, choices=SEVERITY_CHOICES, default=INFO)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -190,9 +197,11 @@ class AuditLog(models.Model):
     def __str__(self):
         return f"[{self.severity}] {self.action} par {self.admin_user} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
 
+
 # --- SIGNAUX ---
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
 
 @receiver(post_save, sender=InvestmentTier)
 def notify_new_tier(sender, instance, created, **kwargs):
@@ -204,8 +213,8 @@ def notify_new_tier(sender, instance, created, **kwargs):
         notifications = [
             Notification(
                 user=user,
-                title="Nouveau Palier VIP Disponible 🌟",
-                message=f"Découvrez le niveau '{instance.name}' ! Rendement attractif garanti. Ne ratez pas cette opportunité !"
+                title="Nouveau Palier VIP Disponible",
+                message=f"Decouvrez le niveau '{instance.name}' ! Rendement attractif garanti. Ne ratez pas cette opportunite !"
             ) for user in users
         ]
         Notification.objects.bulk_create(notifications)

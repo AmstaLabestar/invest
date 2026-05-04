@@ -5,62 +5,57 @@
 
 {% block content %}
 <div class="mb-6">
-    
     <div class="sa-secondary-grid">
-        
-        <!-- SECTION GAUCHE: Statistiques -->
         <div>
-            <!-- STATISTIQUES CARDS -->
             <div style="background: var(--sa-card-bg); border-radius: 1rem; padding: 1.5rem; border: 1px solid var(--sa-border); margin-bottom: 1.5rem;">
                 <div class="flex-between mb-4">
-                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Aperçu Quotidien</h2>
-                    <span class="text-xs text-gray-500">Temps réel</span>
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Apercu Quotidien</h2>
+                    <span class="text-xs text-gray-500">Temps reel</span>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--sa-border); border-radius: 0.75rem; padding: 1.25rem;">
                         <p class="text-xs text-gray-400 mb-1">Nouveaux Inscrits</p>
                         <p class="text-2xl font-bold" style="color: var(--sa-text);">{{ stats.new_users }}</p>
                         <p class="text-xs mt-1" style="color: var(--sa-success-text);">Aujourd'hui</p>
                     </div>
-                    
+
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--sa-border); border-radius: 0.75rem; padding: 1.25rem;">
-                        <p class="text-xs text-gray-400 mb-1">Nouveaux Dépôts</p>
+                        <p class="text-xs text-gray-400 mb-1">Nouveaux Achats</p>
                         <p class="text-2xl font-bold" style="color: var(--sa-text);">{{ stats.new_invested_today|floatformat:0 }} XOF</p>
                         <p class="text-xs mt-1" style="color: var(--sa-success-text);">Aujourd'hui</p>
                     </div>
-                    
+
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--sa-border); border-radius: 0.75rem; padding: 1.25rem;">
                         <p class="text-xs text-gray-400 mb-1">Demandes de Retrait</p>
                         <p class="text-2xl font-bold" style="color: var(--sa-text);">{{ stats.withdrawals_today_amount|floatformat:0 }} XOF</p>
                         <p class="text-xs mt-1" style="color: var(--sa-danger-text);">{{ stats.withdrawals_today_count }} demandes</p>
                     </div>
-                    
+
                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--sa-border); border-radius: 0.75rem; padding: 1.25rem;">
-                        <p class="text-xs text-gray-400 mb-1">Taux d'Activité Moyen</p>
+                        <p class="text-xs text-gray-400 mb-1">Taux d'Activite Moyen</p>
                         <p class="text-2xl font-bold" style="color: var(--sa-text);">{{ stats.activity_rate }}%</p>
                         <p class="text-xs mt-1 text-gray-500">Sur 30 jours</p>
                     </div>
                 </div>
             </div>
-            
-            <!-- TABLEAU DES TRANSACTIONS EN ATTENTE (Cœur du métier du manager) -->
+
             <div style="background: var(--sa-card-bg); border-radius: 1rem; border: 1px solid var(--sa-border); overflow: hidden;">
                 <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Transactions à Traiter</h2>
-                        <p class="text-xs text-gray-500 mt-1">Dépôts ou retraits nécessitant votre validation</p>
+                        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Transactions a Traiter</h2>
+                        <p class="text-xs text-gray-500 mt-1">Achats ou retraits necessitant votre validation</p>
                     </div>
                     <span style="background: var(--sa-danger-bg); color: var(--sa-danger-text); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: bold;">
                         {{ pending_txs.count }} en attente
                     </span>
                 </div>
-                
+
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                         <thead>
                             <tr style="background: rgba(255,255,255,0.02); color: var(--sa-text-muted); text-align: left;">
-                                <th style="padding: 1rem 1.5rem; font-weight: 600;">Référence</th>
+                                <th style="padding: 1rem 1.5rem; font-weight: 600;">Reference</th>
                                 <th style="padding: 1rem 1.5rem; font-weight: 600;">Utilisateur</th>
                                 <th style="padding: 1rem 1.5rem; font-weight: 600;">Type</th>
                                 <th style="padding: 1rem 1.5rem; font-weight: 600; text-align: right;">Montant</th>
@@ -77,10 +72,12 @@
                                     {{ tx.user.username }}
                                 </td>
                                 <td style="padding: 1rem 1.5rem;">
-                                    {% if tx.tx_type == 'DEPOSIT' %}
-                                    <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background: var(--sa-success-bg); color: var(--sa-success-text); font-size: 0.7rem; font-weight: bold;">DÉPÔT</span>
-                                    {% else %}
+                                    {% if tx.tx_type == 'PAY_INVEST' %}
+                                    <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background: var(--sa-success-bg); color: var(--sa-success-text); font-size: 0.7rem; font-weight: bold;">ACHAT</span>
+                                    {% elif tx.tx_type == 'WITHDRAWAL' %}
                                     <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background: var(--sa-danger-bg); color: var(--sa-danger-text); font-size: 0.7rem; font-weight: bold;">RETRAIT</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background: rgba(249, 115, 22, 0.15); color: #f97316; font-size: 0.7rem; font-weight: bold;">{{ tx.get_tx_type_display|upper }}</span>
                                     {% endif %}
                                     <div class="text-xs text-gray-500 mt-1">{{ tx.provider|default:"N/A" }}</div>
                                 </td>
@@ -91,7 +88,7 @@
                                     <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                                         <form method="POST" action="{% url 'process_transaction' tx.id 'approve' %}">
                                             {% csrf_token %}
-                                            <button type="submit" onclick="confirmAction(event, 'Valider définitivement ce {{ tx.get_tx_type_display|lower }} de {{ tx.amount }} XOF ?')" style="background: var(--sa-success-bg); color: var(--sa-success-text); border: 1px solid rgba(34,197,94,0.3); border-radius: 0.375rem; padding: 0.3rem 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;">
+                                            <button type="submit" onclick="confirmAction(event, 'Valider definitivement ce {{ tx.get_tx_type_display|lower }} de {{ tx.amount }} XOF ?')" style="background: var(--sa-success-bg); color: var(--sa-success-text); border: 1px solid rgba(34,197,94,0.3); border-radius: 0.375rem; padding: 0.3rem 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;">
                                                 <i class="ph-bold ph-check"></i>
                                             </button>
                                         </form>
@@ -108,7 +105,7 @@
                             <tr>
                                 <td colspan="5" style="padding: 3rem 1.5rem; text-align: center; color: var(--sa-text-muted);">
                                     <i class="ph-duotone ph-check-circle" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                                    <p>Toutes les transactions ont été traitées !</p>
+                                    <p>Toutes les transactions ont ete traitees !</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -116,22 +113,18 @@
                     </table>
                 </div>
             </div>
-            
         </div>
-        
-        <!-- SECTION DROITE: Alertes et Synthèse Utilisateurs -->
+
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            
-            <!-- ALERTES SYSTÈME -->
             <div style="background: var(--sa-card-bg); border-radius: 1rem; border: 1px solid var(--sa-border); padding: 1.5rem;">
                 <div class="flex-between mb-4">
-                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Alertes Système</h2>
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Alertes Systeme</h2>
                 </div>
-                
+
                 <ul style="list-style-type: none; padding: 0; margin: 0; font-size: 0.85rem;">
                     {% for alert in alerts %}
                     <li style="display: flex; gap: 0.75rem; align-items: flex-start; padding-bottom: 1rem; {% if not forloop.last %}margin-bottom: 1rem; border-bottom: 1px solid var(--sa-border);{% endif %}">
-                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; flex-shrink: 0; 
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; flex-shrink: 0;
                             {% if alert.type == 'warning' %}background: rgba(234, 179, 8, 0.15); color: #eab308;
                             {% elif alert.type == 'error' %}background: rgba(239, 68, 68, 0.15); color: #ef4444;
                             {% else %}background: rgba(16, 185, 129, 0.15); color: #10b981;{% endif %}">
@@ -142,10 +135,7 @@
                     {% endfor %}
                 </ul>
             </div>
-            
         </div>
-        
     </div>
-    
 </div>
 {% endblock %}
