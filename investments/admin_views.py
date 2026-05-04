@@ -123,7 +123,9 @@ def process_transaction(request, tx_id, action):
             tx.user.balance += tx.amount
             tx.user.save(update_fields=['balance'])
         elif tx.tx_type == Transaction.TransactionType.PAY_INVEST and tx.related_investment:
-            tx.related_investment.delete()
+            related_investment = tx.related_investment
+            tx.related_investment = None
+            related_investment.delete()
         tx.save()
         messages.info(request, "Transaction rejetee. Les fonds lies ont ete restitues si c'etait un retrait.")
 
