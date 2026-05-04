@@ -1,5 +1,60 @@
+from decimal import Decimal
+
+from django.db.models import Sum
 from django.utils import timezone
-from .models import Investment, InvestmentTier, UserBooster
+from .models import Investment, InvestmentTier, Transaction, UserBooster
+
+
+class WalletService:
+    @staticmethod
+    def get_available_balance(user):
+        return user.balance or Decimal("0")
+
+    @staticmethod
+    def get_reserved_balance(user):
+        return (
+            Transaction.objects.filter(
+                user=user,
+                tx_type=Transaction.TransactionType.WITHDRAWAL,
+                status=Transaction.Status.PENDING,
+            ).aggregate(Sum('amount'))['amount__sum']
+            or Decimal("0")
+        )
+
+    @classmethod
+    def get_total_balance(cls, user):
+        return cls.get_available_balance(user) + cls.get_reserved_balance(user)
+
+    @staticmethod
+    def get_total_invested_capital(user):
+        return (
+            Investment.objects.filter(
+                user=user,
+                status=Investment.Status.ACTIVE,
+            ).aggregate(Sum('amount_invested'))['amount_invested__sum']
+            or Decimal("0")
+        )
+
+    @staticmethod
+    def get_realized_gains(user, start_date=None):
+        queryset = Transaction.objects.filter(
+            user=user,
+            tx_type__in=[
+                Transaction.TransactionType.ROI,
+                Transaction.TransactionType.BONUS,
+            ],
+            status=Transaction.Status.SUCCESS,
+        )
+        if start_date is not None:
+            queryset = queryset.filter(created_at__gte=start_date)
+        return queryset.aggregate(Sum('amount'))['amount__sum'] or Decimal("0")
+
+    @classmethod
+    def get_withdrawable_amount(cls, user):
+        # Current behavior keeps withdrawals tied to the available balance.
+        # Future branches can swap this to "gains only" without rewriting views.
+        return cls.get_available_balance(user)
+
 
 class CalculationService:
     @staticmethod
@@ -8,7 +63,7 @@ class CalculationService:
         start_date = investment.start_date
         end_date = investment.end_date
 
-        if investment.status != 'ACTIVE':
+        if investment.status != Investment.Status.ACTIVE:
             return {'gains': 0, 'message': 'Investissement non actif'}
 
         if now < start_date:
@@ -56,7 +111,7 @@ class CalculationService:
 
     @staticmethod
     def user_total_gains(user):
-        investments = Investment.objects.filter(user=user, status='ACTIVE')
+        investments = Investment.objects.filter(user=user, status=Investment.Status.ACTIVE)
         gains_total = 0.0
         details = []
 

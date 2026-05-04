@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 import json
 from .models import Investment, Transaction, Booster, UserBooster, SystemSettings, InvestmentTier
-from .services import CalculationService
+from .services import CalculationService, WalletService
 from users.models import Notification
 from django.db.models import Sum
 from decimal import Decimal
@@ -62,16 +62,14 @@ def home(request):
     user = request.user
     
     # Agrégation des vraies données depuis la BD
-    active_invs = Investment.objects.filter(user=user, status='ACTIVE')
-    investi_total = active_invs.aggregate(Sum('amount_invested'))['amount_invested__sum'] or 0
+    active_invs = Investment.objects.filter(user=user, status=Investment.Status.ACTIVE)
+    investi_total = WalletService.get_total_invested_capital(user)
     produits_actifs = active_invs.values('tier').distinct().count()
     
     # Calcul des gains du mois (Transactions de type ROI validées ce mois-ci)
     from django.utils import timezone
     first_day_of_month = timezone.now().replace(day=1, hour=0, minute=0, second=0)
-    gains_mois = Transaction.objects.filter(
-        user=user, tx_type='ROI', status='SUCCESS', created_at__gte=first_day_of_month
-    ).aggregate(Sum('amount'))['amount__sum'] or 0
+    gains_mois = WalletService.get_realized_gains(user, start_date=first_day_of_month)
     
     # Transactions récentes (max 3)
     transactions = Transaction.objects.filter(user=user).order_by('-created_at')[:3]
@@ -93,12 +91,11 @@ def home(request):
         gains_jour = base_gains_jour
 
     # Calculate pending withdrawals to show reserved money
-    pending_withdrawals = Transaction.objects.filter(
-        user=user, tx_type='WITHDRAWAL', status='PENDING'
-    ).aggregate(Sum('amount'))['amount__sum'] or 0
+    pending_withdrawals = WalletService.get_reserved_balance(user)
+    total_balance = WalletService.get_total_balance(user)
 
     context = {
-        'solde_total': "{:,.0f}".format(user.balance).replace(',', '.'),
+        'solde_total': "{:,.0f}".format(total_balance).replace(',', '.'),
         'gains_mois': f"+{gains_mois:,.0f}".replace(',', '.'),
         'points': user.points,
         'gains_jour': f"+{gains_jour:,.0f}".replace(',', '.'),
@@ -118,7 +115,7 @@ def home(request):
 def trade(request):
     """Page d'Investissement / Liste des Produits réels"""
     tiers = InvestmentTier.objects.filter(is_active=True).order_by('level')
-    active_investments = Investment.objects.filter(user=request.user, status='ACTIVE')
+    active_investments = Investment.objects.filter(user=request.user, status=Investment.Status.ACTIVE)
     
     if request.method == 'POST':
         montant = request.POST.get('amount')
@@ -145,17 +142,17 @@ def trade(request):
                             amount_invested=montant,
                             daily_rate_snapshot=daily_rate,
                             end_date=end_date,
-                            status='PENDING'
+                            status=Investment.Status.PENDING
                         )
                         
                         # Génération de la transaction de type Checkout
                         tx_ref = f"PAY-{request.user.id}-{uuid.uuid4().hex[:6].upper()}"
                         Transaction.objects.create(
                             user=request.user, 
-                            tx_type='PAY_INVEST', 
+                            tx_type=Transaction.TransactionType.PAY_INVEST,
                             amount=montant, 
                             provider=f"{provider} ({phone})", 
-                            status='PENDING', 
+                            status=Transaction.Status.PENDING,
                             tx_reference=tx_ref,
                             related_investment=inv
                         )
@@ -204,7 +201,7 @@ def booster(request):
                             tx_type=Transaction.TransactionType.BOOSTER,
                             amount=b.price,
                             provider='INTERNAL',
-                            status='SUCCESS',
+                            status=Transaction.Status.SUCCESS,
                             tx_reference=tx_ref
                         )
                         
@@ -239,9 +236,7 @@ def booster(request):
     referral_code = f"INV-{user.username[:3].upper()}-{user.id}"
     
     # pending withdrawals for booster view
-    pending_withdrawals = Transaction.objects.filter(
-        user=user, tx_type='WITHDRAWAL', status='PENDING'
-    ).aggregate(Sum('amount'))['amount__sum'] or 0
+    pending_withdrawals = WalletService.get_reserved_balance(user)
 
     context = {
         'boosters': boosters,
@@ -278,7 +273,7 @@ def withdraw_request(request):
                     # Verrouillage de la ligne Utilisateur pour éviter le double-spend (Faille de course)
                     safe_user = User.objects.select_for_update().get(id=request.user.id)
                     
-                    if amount > safe_user.balance:
+                    if amount > WalletService.get_withdrawable_amount(safe_user):
                         messages.error(request, "Solde insuffisant pour ce retrait.")
                         next_url = request.META.get('HTTP_REFERER', 'booster')
                         return redirect(next_url)
@@ -293,7 +288,7 @@ def withdraw_request(request):
                         user=request.user,
                         tx_type=Transaction.TransactionType.WITHDRAWAL,
                         amount=amount,
-                        status='PENDING',
+                        status=Transaction.Status.PENDING,
                         provider=f"{provider} ({phone})",
                         tx_reference=tx_ref
                     )
@@ -364,10 +359,10 @@ def settings_points(request):
             # Enregistrement de la transaction
             Transaction.objects.create(
                 user=user,
-                tx_type='BONUS',
+                tx_type=Transaction.TransactionType.BONUS,
                 amount=montant_gagné,
                 provider='SYSTEM_CONVERSION',
-                status='SUCCESS',
+                status=Transaction.Status.SUCCESS,
                 tx_reference=f"CONV-{user.id}-{user.points}"
             )
             

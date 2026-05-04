@@ -30,7 +30,7 @@ def manager_dashboard(request):
     today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     thirty_days_ago = timezone.now() - timedelta(days=30)
 
-    pending_txs = Transaction.objects.filter(status='PENDING').order_by('-created_at')
+    pending_txs = Transaction.objects.filter(status=Transaction.Status.PENDING).order_by('-created_at')
 
     total_users = User.objects.count()
     active_users_30d = User.objects.filter(last_login__gte=thirty_days_ago).count()
@@ -54,7 +54,10 @@ def manager_dashboard(request):
     alerts = []
     if pending_withdrawals_count > 0:
         alerts.append({'type': 'warning', 'message': f'{pending_withdrawals_count} retrait(s) en attente de validation.'})
-    failed_txs_today = Transaction.objects.filter(status='FAILED', created_at__gte=today).count()
+    failed_txs_today = Transaction.objects.filter(
+        status=Transaction.Status.FAILED,
+        created_at__gte=today,
+    ).count()
     if failed_txs_today > 0:
         alerts.append({'type': 'error', 'message': f"{failed_txs_today} transaction(s) echouee(s) aujourd'hui."})
     alerts.append({'type': 'success', 'message': 'Le systeme de paiement est operationnel et synchronise.'})
@@ -87,18 +90,21 @@ def manager_dashboard(request):
 
 @user_passes_test(is_manager, login_url='/login/')
 def process_transaction(request, tx_id, action):
-    tx = get_object_or_404(Transaction, id=tx_id, status='PENDING')
+    tx = get_object_or_404(Transaction, id=tx_id, status=Transaction.Status.PENDING)
 
     if action == 'approve':
-        tx.status = 'SUCCESS'
+        tx.status = Transaction.Status.SUCCESS
         if tx.tx_type == Transaction.TransactionType.PAY_INVEST and tx.related_investment:
             inv = tx.related_investment
-            inv.status = 'ACTIVE'
+            inv.status = Investment.Status.ACTIVE
             inv.start_date = timezone.now()
             inv.save()
 
             # Application des points exclusifs au bonus de parrainage
-            is_first_investment = Investment.objects.filter(user=tx.user, status='ACTIVE').count() == 1
+            is_first_investment = Investment.objects.filter(
+                user=tx.user,
+                status=Investment.Status.ACTIVE,
+            ).count() == 1
             if is_first_investment and tx.user.sponsor and inv.amount_invested >= 10000:
                 tx.user.sponsor.points += 20
                 tx.user.sponsor.save(update_fields=['points'])
@@ -118,7 +124,7 @@ def process_transaction(request, tx_id, action):
         messages.success(request, f"Transaction de {tx.amount} XOF validee avec succes.")
 
     elif action == 'reject':
-        tx.status = 'FAILED'
+        tx.status = Transaction.Status.FAILED
         if tx.tx_type == Transaction.TransactionType.WITHDRAWAL:
             tx.user.balance += tx.amount
             tx.user.save(update_fields=['balance'])
@@ -143,21 +149,23 @@ def superadmin_dashboard(request):
     # Statistiques Tresorerie
     completed_deposits = Transaction.objects.filter(
         tx_type=Transaction.TransactionType.PAY_INVEST,
-        status='SUCCESS'
+        status=Transaction.Status.SUCCESS
     ).aggregate(Sum('amount'))['amount__sum'] or 0
     completed_withdrawals = Transaction.objects.filter(
         tx_type=Transaction.TransactionType.WITHDRAWAL,
-        status='SUCCESS'
+        status=Transaction.Status.SUCCESS
     ).aggregate(Sum('amount'))['amount__sum'] or 0
 
     # Fonds Virtuels & Conversion
     virtual_balance = User.objects.aggregate(Sum('balance'))['balance__sum'] or 0
-    total_invested = Investment.objects.filter(status='ACTIVE').aggregate(Sum('amount_invested'))['amount_invested__sum'] or 0
+    total_invested = Investment.objects.filter(
+        status=Investment.Status.ACTIVE
+    ).aggregate(Sum('amount_invested'))['amount_invested__sum'] or 0
 
     total_users = User.objects.count()
     users_with_deposit = Transaction.objects.filter(
         tx_type=Transaction.TransactionType.PAY_INVEST,
-        status='SUCCESS'
+        status=Transaction.Status.SUCCESS
     ).values('user').distinct().count()
     conversion_rate = int((users_with_deposit / total_users * 100) if total_users > 0 else 0)
 
@@ -189,13 +197,13 @@ def superadmin_dashboard(request):
 
         dep_sum = Transaction.objects.filter(
             tx_type=Transaction.TransactionType.PAY_INVEST,
-            status='SUCCESS',
+            status=Transaction.Status.SUCCESS,
             created_at__gte=day_start,
             created_at__lt=day_end
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         with_sum = Transaction.objects.filter(
             tx_type=Transaction.TransactionType.WITHDRAWAL,
-            status='SUCCESS',
+            status=Transaction.Status.SUCCESS,
             created_at__gte=day_start,
             created_at__lt=day_end
         ).aggregate(Sum('amount'))['amount__sum'] or 0
