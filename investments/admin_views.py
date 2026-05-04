@@ -11,7 +11,9 @@ from users.models import Notification
 User = get_user_model()
 
 def is_manager(user):
-    return user.is_authenticated and (getattr(user, 'is_admin', False) or user.is_superuser)
+    return user.is_authenticated and (
+        getattr(user, 'is_platform_admin', False) or user.is_superuser
+    )
 
 def is_superadmin(user):
     return user.is_authenticated and user.is_superuser
