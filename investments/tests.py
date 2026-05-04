@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from users.models import Notification
 
-from .models import Booster, SystemSettings, Transaction
+from .models import Booster, Investment, InvestmentTier, SystemSettings, Transaction
 
 
 User = get_user_model()
@@ -111,3 +111,135 @@ class WithdrawalRequestTests(TestCase):
                 tx_type=Transaction.TransactionType.WITHDRAWAL,
             ).exists()
         )
+
+
+class ManagerTransactionFlowTests(TestCase):
+    def setUp(self):
+        self.manager = User.objects.create_superuser(
+            username="superadmin",
+            password="AdminPass123!",
+            email="admin@example.com",
+            phone_number="+22670000012",
+        )
+        self.sponsor = User.objects.create_user(
+            username="sponsor",
+            password="TestPass123!",
+            phone_number="+22670000013",
+            points=0,
+        )
+        self.client_user = User.objects.create_user(
+            username="investor",
+            password="TestPass123!",
+            phone_number="+22670000014",
+            sponsor=self.sponsor,
+            balance=Decimal("4000"),
+        )
+        self.tier = InvestmentTier.objects.create(
+            name="Starter",
+            level=1,
+            min_amount=Decimal("10000"),
+            max_amount=Decimal("50000"),
+            daily_rate=Decimal("0.0120"),
+            monthly_rate=Decimal("0.3600"),
+            cycle_days=30,
+        )
+
+    def test_manager_approval_activates_investment_and_rewards_sponsor(self):
+        investment = Investment.objects.create(
+            user=self.client_user,
+            tier=self.tier,
+            amount_invested=Decimal("10000"),
+            daily_rate_snapshot=Decimal("0.0120"),
+            status='PENDING',
+        )
+        tx = Transaction.objects.create(
+            user=self.client_user,
+            tx_type=Transaction.TransactionType.PAY_INVEST,
+            amount=Decimal("10000"),
+            status='PENDING',
+            tx_reference='INVEST-APPROVE-001',
+            related_investment=investment,
+        )
+
+        self.client.force_login(self.manager)
+        response = self.client.get(
+            reverse('process_transaction', args=[tx.id, 'approve']),
+            HTTP_REFERER=reverse('manager_dashboard'),
+        )
+
+        self.assertRedirects(response, reverse('manager_dashboard'))
+
+        tx.refresh_from_db()
+        investment.refresh_from_db()
+        self.sponsor.refresh_from_db()
+
+        self.assertEqual(tx.status, 'SUCCESS')
+        self.assertEqual(investment.status, 'ACTIVE')
+        self.assertEqual(self.sponsor.points, 20)
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.sponsor,
+                title__icontains='Parrainage',
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.client_user,
+                title__icontains='Palier',
+            ).exists()
+        )
+
+    def test_manager_rejects_withdrawal_and_refunds_reserved_balance(self):
+        tx = Transaction.objects.create(
+            user=self.client_user,
+            tx_type=Transaction.TransactionType.WITHDRAWAL,
+            amount=Decimal("6000"),
+            status='PENDING',
+            tx_reference='WITHDRAW-REJECT-001',
+            provider='Orange Money (+22670000014)',
+        )
+
+        self.client.force_login(self.manager)
+        response = self.client.get(
+            reverse('process_transaction', args=[tx.id, 'reject']),
+            HTTP_REFERER=reverse('manager_dashboard'),
+        )
+
+        self.assertRedirects(response, reverse('manager_dashboard'))
+
+        tx.refresh_from_db()
+        self.client_user.refresh_from_db()
+
+        self.assertEqual(tx.status, 'FAILED')
+        self.assertEqual(self.client_user.balance, Decimal("10000"))
+
+    def test_manager_rejects_pay_invest_and_deletes_pending_investment(self):
+        investment = Investment.objects.create(
+            user=self.client_user,
+            tier=self.tier,
+            amount_invested=Decimal("15000"),
+            daily_rate_snapshot=Decimal("0.0120"),
+            status='PENDING',
+        )
+        tx = Transaction.objects.create(
+            user=self.client_user,
+            tx_type=Transaction.TransactionType.PAY_INVEST,
+            amount=Decimal("15000"),
+            status='PENDING',
+            tx_reference='INVEST-REJECT-001',
+            related_investment=investment,
+        )
+
+        self.client.force_login(self.manager)
+        response = self.client.get(
+            reverse('process_transaction', args=[tx.id, 'reject']),
+            HTTP_REFERER=reverse('manager_dashboard'),
+        )
+
+        self.assertRedirects(response, reverse('manager_dashboard'))
+
+        tx.refresh_from_db()
+
+        self.assertEqual(tx.status, 'FAILED')
+        self.assertFalse(Investment.objects.filter(id=investment.id).exists())
+        self.assertIsNone(tx.related_investment)
