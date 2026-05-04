@@ -14,22 +14,20 @@
     {% for tx in transactions %}
     <div class="card card-dark" style="border-radius: 1rem; border: none; background-color: #111827; padding: 1rem; border: 1px solid rgba(255,255,255,0.02); margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 1rem;">
-            
-            <!-- Icône Conditionnelle selon le type de tx -->
-            <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-                {% if tx.tx_type == 'DEPOSIT' %} background-color: rgba(16, 185, 129, 0.1); color: #10b981;
+            <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                {% if tx.tx_type == 'PAY_INVEST' %} background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;
                 {% elif tx.tx_type == 'WITHDRAWAL' %} background-color: rgba(239, 68, 68, 0.1); color: #ef4444;
-                {% elif tx.tx_type == 'INVESTMENT' %} background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;
+                {% elif tx.tx_type == 'BOOSTER' %} background-color: rgba(249, 115, 22, 0.1); color: #f97316;
                 {% elif tx.tx_type == 'ROI' %} background-color: rgba(245, 158, 11, 0.1); color: #f59e0b;
                 {% else %} background-color: rgba(167, 139, 250, 0.1); color: #a78bfa; {% endif %}">
-                
-                {% if tx.tx_type == 'DEPOSIT' %}<i class="ph-bold ph-arrow-down-left"></i>
+
+                {% if tx.tx_type == 'PAY_INVEST' %}<i class="ph-bold ph-briefcase"></i>
                 {% elif tx.tx_type == 'WITHDRAWAL' %}<i class="ph-bold ph-arrow-up-right"></i>
-                {% elif tx.tx_type == 'INVESTMENT' %}<i class="ph-bold ph-briefcase"></i>
+                {% elif tx.tx_type == 'BOOSTER' %}<i class="ph-bold ph-rocket-launch"></i>
                 {% elif tx.tx_type == 'ROI' %}<i class="ph-bold ph-coins"></i>
                 {% else %}<i class="ph-bold ph-asterisk"></i>{% endif %}
             </div>
-            
+
             <div>
                 <p class="font-bold text-white m-0" style="font-size: 0.95rem;">
                     {{ tx.get_tx_type_display }}
@@ -37,19 +35,19 @@
                 <p class="text-xs text-gray-500 m-0 mt-1">{{ tx.created_at|date:"d M Y - H:i" }}</p>
             </div>
         </div>
-        
+
         <div style="text-align: right;">
-            <p class="font-bold m-0" style="font-size: 1.05rem; 
-                {% if tx.tx_type == 'DEPOSIT' or tx.tx_type == 'ROI' %} color: #10b981; 
+            <p class="font-bold m-0" style="font-size: 1.05rem;
+                {% if tx.tx_type == 'ROI' or tx.tx_type == 'BONUS' %} color: #10b981;
                 {% else %} color: #ffffff; {% endif %}">
-                {% if tx.tx_type == 'DEPOSIT' or tx.tx_type == 'ROI' %}+{% else %}-{% endif %}
+                {% if tx.tx_type == 'ROI' or tx.tx_type == 'BONUS' %}+{% else %}-{% endif %}
                 {{ tx.amount|floatformat:0 }} <span class="text-xs text-gray-400">XOF</span>
             </p>
-            
+
             <span class="text-xs" style="
                 {% if tx.status == 'SUCCESS' %} color: #10b981;
                 {% elif tx.status == 'PENDING' %} color: #f59e0b;
-                {% elif tx.status == 'FAILED' %} color: #ef4444; 
+                {% elif tx.status == 'FAILED' %} color: #ef4444;
                 {% endif %} font-weight: 500;">
                 {{ tx.get_status_display }}
             </span>
@@ -58,7 +56,7 @@
     {% empty %}
     <div class="empty-state" style="background-color: #111827; border-radius: 1rem; border: 1px dashed rgba(255,255,255,0.1); padding: 3rem 1rem; text-align: center;">
         <i class="ph-duotone ph-receipt text-gray-600" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-        <p class="text-sm text-gray-400 m-0">Aucune transaction trouvée.</p>
+        <p class="text-sm text-gray-400 m-0">Aucune transaction trouvee.</p>
     </div>
     {% endfor %}
 </div>

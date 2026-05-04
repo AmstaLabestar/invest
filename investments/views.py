@@ -201,7 +201,7 @@ def booster(request):
                         tx_ref = f"BOOST-{request.user.id}-{uuid.uuid4().hex[:6].upper()}"
                         Transaction.objects.create(
                             user=request.user,
-                            tx_type='INVESTMENT',
+                            tx_type=Transaction.TransactionType.BOOSTER,
                             amount=b.price,
                             provider='INTERNAL',
                             status='SUCCESS',

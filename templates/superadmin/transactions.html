@@ -10,7 +10,7 @@
             <i class="ph-duotone ph-swap mr-2" style="color: #06b6d4;"></i> Historique Complet
         </h2>
     </div>
-    
+
     <div style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
             <thead>
@@ -31,7 +31,8 @@
                     <td style="padding: 1rem;">{{ tx.created_at|date:"d M Y - H:i" }}</td>
                     <td style="padding: 1rem; font-weight: bold;">{{ tx.user.username }}</td>
                     <td style="padding: 1rem;">
-                        {% if tx.tx_type == 'DEPOSIT' %}<span style="color: #3b82f6;"><i class="ph-bold ph-arrow-down"></i> Dépôt</span>
+                        {% if tx.tx_type == 'PAY_INVEST' %}<span style="color: #3b82f6;"><i class="ph-bold ph-arrow-down"></i> Achat de palier</span>
+                        {% elif tx.tx_type == 'BOOSTER' %}<span style="color: #f97316;"><i class="ph-bold ph-rocket-launch"></i> Achat de booster</span>
                         {% elif tx.tx_type == 'WITHDRAWAL' %}<span style="color: #ef4444;"><i class="ph-bold ph-arrow-up"></i> Retrait</span>
                         {% else %}<span style="color: #a855f7;">{{ tx.get_tx_type_display }}</span>{% endif %}
                         <br><small style="color: var(--sa-text-muted);">{{ tx.provider|default:"-" }} / {{ tx.tx_reference|default:"-" }}</small>
@@ -39,18 +40,18 @@
                     <td style="padding: 1rem; font-weight: bold; color: #fbbf24;">{{ tx.amount|floatformat:0 }} XOF</td>
                     <td style="padding: 1rem; text-align: center;">
                         {% if tx.status == 'SUCCESS' %}
-                            <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: var(--sa-success-bg); color: var(--sa-success-text); font-size: 0.75rem; font-weight: bold;">VALIDÉ</span>
+                            <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: var(--sa-success-bg); color: var(--sa-success-text); font-size: 0.75rem; font-weight: bold;">VALIDE</span>
                         {% elif tx.status == 'PENDING' %}
                             <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: rgba(245,158,11,0.1); color: #f59e0b; font-size: 0.75rem; font-weight: bold;">EN ATTENTE</span>
                         {% else %}
-                            <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: var(--sa-danger-bg); color: var(--sa-danger-text); font-size: 0.75rem; font-weight: bold;">ÉCHOUÉ</span>
+                            <span style="display:inline-block; padding: 4px 8px; border-radius: 999px; background: var(--sa-danger-bg); color: var(--sa-danger-text); font-size: 0.75rem; font-weight: bold;">ECHOUE</span>
                         {% endif %}
                     </td>
                     <td style="padding: 1rem; text-align: right;">
                         {% if tx.status == 'PENDING' %}
                             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                                <a href="{% url 'process_transaction' tx.id 'approve' %}" onclick="confirmAction(event, 'Approuver cette transaction ? Les fonds virtuels seront crédités.', this.href)" class="btn-icon" style="background: var(--sa-success-bg); color: var(--sa-success-text); padding: 0.4rem 0.6rem; border-radius: 0.25rem;" title="Approuver"><i class="ph-duotone ph-check"></i></a>
-                                <a href="{% url 'process_transaction' tx.id 'reject' %}" onclick="confirmAction(event, 'Rejeter cette demande ? Cette transaction sera marquée comme échouée.', this.href)" class="btn-icon" style="background: var(--sa-danger-bg); color: var(--sa-danger-text); padding: 0.4rem 0.6rem; border-radius: 0.25rem;" title="Rejeter"><i class="ph-duotone ph-x"></i></a>
+                                <a href="{% url 'process_transaction' tx.id 'approve' %}" onclick="confirmAction(event, 'Approuver cette transaction ? Les fonds virtuels seront credites.', this.href)" class="btn-icon" style="background: var(--sa-success-bg); color: var(--sa-success-text); padding: 0.4rem 0.6rem; border-radius: 0.25rem;" title="Approuver"><i class="ph-duotone ph-check"></i></a>
+                                <a href="{% url 'process_transaction' tx.id 'reject' %}" onclick="confirmAction(event, 'Rejeter cette demande ? Cette transaction sera marquee comme echouee.', this.href)" class="btn-icon" style="background: var(--sa-danger-bg); color: var(--sa-danger-text); padding: 0.4rem 0.6rem; border-radius: 0.25rem;" title="Rejeter"><i class="ph-duotone ph-x"></i></a>
                             </div>
                         {% else %}
                             <span style="color: var(--sa-text-muted);">-</span>
@@ -59,7 +60,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="padding: 2rem; text-align: center; color: var(--sa-text-muted);">Aucune transaction trouvée.</td>
+                    <td colspan="7" style="padding: 2rem; text-align: center; color: var(--sa-text-muted);">Aucune transaction trouvee.</td>
                 </tr>
                 {% endfor %}
             </tbody>
