@@ -13,7 +13,9 @@ def calculate_daily_roi():
     Tâche CRON quotidienne.
     Distribue les pourcentages de ROI (daily_roi_percentage) sur le solde des utilisateurs pour tous les investissements actifs.
     """
-    active_investments = Investment.objects.filter(status='ACTIVE').select_related('user', 'tier')
+    active_investments = Investment.objects.filter(
+        status=Investment.Status.ACTIVE
+    ).select_related('user', 'tier')
     
     with transaction.atomic():
         for inv in active_investments:
@@ -42,9 +44,9 @@ def calculate_daily_roi():
             tx_ref = f"ROI-{user.id}-{uuid.uuid4().hex[:8].upper()}"
             Transaction.objects.create(
                 user=user,
-                tx_type='ROI',
+                tx_type=Transaction.TransactionType.ROI,
                 amount=daily_profit,
-                status='SUCCESS',
+                status=Transaction.Status.SUCCESS,
                 provider='System',
                 tx_reference=tx_ref
             )
@@ -58,7 +60,10 @@ def get_node_volume(user):
     # Note : Sur un vrai serveur en production à très haute charge, on préférera une structure MPTT (Modified Preorder Tree Traversal)
     # pour optimiser la requête SQL de l'arbre, mais cette récursion fait le travail pour la maquette.
     
-    volume = sum(inv.amount_invested for inv in user.investments.filter(status='ACTIVE'))
+    volume = sum(
+        inv.amount_invested
+        for inv in user.investments.filter(status=Investment.Status.ACTIVE)
+    )
     
     for referral in user.referrals.all():
         volume += get_node_volume(referral)
@@ -102,9 +107,9 @@ def calculate_binary_bonus():
                 tx_ref = f"BONUS-{user.id}-{uuid.uuid4().hex[:8].upper()}"
                 Transaction.objects.create(
                     user=user,
-                    tx_type='BONUS',
+                    tx_type=Transaction.TransactionType.BONUS,
                     amount=bonus_amount,
-                    status='SUCCESS',
+                    status=Transaction.Status.SUCCESS,
                     provider='Binary Bonus',
                     tx_reference=tx_ref
                 )

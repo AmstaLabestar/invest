@@ -29,8 +29,8 @@ class InvestmentTier(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Palier VIP"
-        verbose_name_plural = "Paliers VIP"
+        verbose_name = "Categorie d'investissement"
+        verbose_name_plural = "Categories d'investissement"
         ordering = ['level']
 
     def __str__(self):
@@ -54,22 +54,22 @@ class InvestmentTier(models.Model):
 
 
 class Investment(models.Model):
-    STATUS_CHOICES = [
-        ('PENDING', 'En attente de paiement'),
-        ('ACTIVE', 'Actif'),
-        ('COMPLETED', 'Termine'),
-    ]
+    class Status(models.TextChoices):
+        PENDING = ('PENDING', 'En attente de paiement')
+        ACTIVE = ('ACTIVE', 'Actif')
+        COMPLETED = ('COMPLETED', 'Termine')
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='investments')
     tier = models.ForeignKey(InvestmentTier, on_delete=models.SET_NULL, null=True, blank=True)
     amount_invested = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Montant Investi")
     daily_rate_snapshot = models.DecimalField(max_digits=5, decimal_places=4, default=0.0, verbose_name="Taux journalier fige")
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
 
     class Meta:
-        verbose_name = "Investissement"
-        verbose_name_plural = "Investissements"
+        verbose_name = "Souscription"
+        verbose_name_plural = "Souscriptions"
 
     @property
     def days_passed(self):
@@ -88,7 +88,15 @@ class Investment(models.Model):
 
     def __str__(self):
         tier_name = self.tier.name if self.tier else "Inconnu"
-        return f"{self.user} - Palier {tier_name} ({self.amount_invested})"
+        return f"{self.user} - Categorie {tier_name} ({self.amount_invested})"
+
+    @property
+    def is_payment_pending(self):
+        return self.status == self.Status.PENDING
+
+    @property
+    def is_active(self):
+        return self.status == self.Status.ACTIVE
 
 
 class Transaction(models.Model):
@@ -99,16 +107,16 @@ class Transaction(models.Model):
         ROI = ('ROI', 'Gains Rendement')
         BONUS = ('BONUS', 'Bonus Parrainage')
 
-    STATUS_CHOICES = [
-        ('PENDING', 'En attente'),
-        ('SUCCESS', 'Valide'),
-        ('FAILED', 'Echoue'),
-    ]
+    class Status(models.TextChoices):
+        PENDING = ('PENDING', 'En attente')
+        SUCCESS = ('SUCCESS', 'Valide')
+        FAILED = ('FAILED', 'Echoue')
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
     tx_type = models.CharField(max_length=15, choices=TransactionType.choices)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     provider = models.CharField(max_length=255, blank=True, help_text="CinetPay, Orange Money, Crypto Wallet...")
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
     tx_reference = models.CharField(max_length=100, unique=True, blank=True, null=True)
     related_investment = models.ForeignKey('Investment', on_delete=models.SET_NULL, null=True, blank=True, related_name='payment_tx')
     created_at = models.DateTimeField(auto_now_add=True)

@@ -7,6 +7,7 @@ from django.urls import reverse
 from users.models import Notification
 
 from .models import Booster, Investment, InvestmentTier, SystemSettings, Transaction
+from .services import WalletService
 
 
 User = get_user_model()
@@ -78,7 +79,7 @@ class WithdrawalRequestTests(TestCase):
 
         tx = Transaction.objects.get(user=self.user, tx_reference__startswith='RET-')
         self.assertEqual(tx.tx_type, Transaction.TransactionType.WITHDRAWAL)
-        self.assertEqual(tx.status, 'PENDING')
+        self.assertEqual(tx.status, Transaction.Status.PENDING)
         self.assertEqual(tx.amount, Decimal("6000"))
         self.assertEqual(tx.provider, 'Orange Money (+22670000011)')
         self.assertTrue(
@@ -150,13 +151,13 @@ class ManagerTransactionFlowTests(TestCase):
             tier=self.tier,
             amount_invested=Decimal("10000"),
             daily_rate_snapshot=Decimal("0.0120"),
-            status='PENDING',
+            status=Investment.Status.PENDING,
         )
         tx = Transaction.objects.create(
             user=self.client_user,
             tx_type=Transaction.TransactionType.PAY_INVEST,
             amount=Decimal("10000"),
-            status='PENDING',
+            status=Transaction.Status.PENDING,
             tx_reference='INVEST-APPROVE-001',
             related_investment=investment,
         )
@@ -173,8 +174,8 @@ class ManagerTransactionFlowTests(TestCase):
         investment.refresh_from_db()
         self.sponsor.refresh_from_db()
 
-        self.assertEqual(tx.status, 'SUCCESS')
-        self.assertEqual(investment.status, 'ACTIVE')
+        self.assertEqual(tx.status, Transaction.Status.SUCCESS)
+        self.assertEqual(investment.status, Investment.Status.ACTIVE)
         self.assertEqual(self.sponsor.points, 20)
         self.assertTrue(
             Notification.objects.filter(
@@ -194,7 +195,7 @@ class ManagerTransactionFlowTests(TestCase):
             user=self.client_user,
             tx_type=Transaction.TransactionType.WITHDRAWAL,
             amount=Decimal("6000"),
-            status='PENDING',
+            status=Transaction.Status.PENDING,
             tx_reference='WITHDRAW-REJECT-001',
             provider='Orange Money (+22670000014)',
         )
@@ -210,7 +211,7 @@ class ManagerTransactionFlowTests(TestCase):
         tx.refresh_from_db()
         self.client_user.refresh_from_db()
 
-        self.assertEqual(tx.status, 'FAILED')
+        self.assertEqual(tx.status, Transaction.Status.FAILED)
         self.assertEqual(self.client_user.balance, Decimal("10000"))
 
     def test_manager_rejects_pay_invest_and_deletes_pending_investment(self):
@@ -219,13 +220,13 @@ class ManagerTransactionFlowTests(TestCase):
             tier=self.tier,
             amount_invested=Decimal("15000"),
             daily_rate_snapshot=Decimal("0.0120"),
-            status='PENDING',
+            status=Investment.Status.PENDING,
         )
         tx = Transaction.objects.create(
             user=self.client_user,
             tx_type=Transaction.TransactionType.PAY_INVEST,
             amount=Decimal("15000"),
-            status='PENDING',
+            status=Transaction.Status.PENDING,
             tx_reference='INVEST-REJECT-001',
             related_investment=investment,
         )
@@ -240,6 +241,70 @@ class ManagerTransactionFlowTests(TestCase):
 
         tx.refresh_from_db()
 
-        self.assertEqual(tx.status, 'FAILED')
+        self.assertEqual(tx.status, Transaction.Status.FAILED)
         self.assertFalse(Investment.objects.filter(id=investment.id).exists())
         self.assertIsNone(tx.related_investment)
+
+
+class WalletServiceTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="wallet-user",
+            password="TestPass123!",
+            phone_number="+22670000015",
+            balance=Decimal("8000"),
+        )
+        self.tier = InvestmentTier.objects.create(
+            name="Foundation",
+            level=2,
+            min_amount=Decimal("5000"),
+            max_amount=Decimal("50000"),
+            daily_rate=Decimal("0.0150"),
+            monthly_rate=Decimal("0.4500"),
+            cycle_days=45,
+        )
+        Investment.objects.create(
+            user=self.user,
+            tier=self.tier,
+            amount_invested=Decimal("12000"),
+            daily_rate_snapshot=Decimal("0.0150"),
+            status=Investment.Status.ACTIVE,
+        )
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.WITHDRAWAL,
+            amount=Decimal("2000"),
+            status=Transaction.Status.PENDING,
+            tx_reference='WALLET-PENDING-001',
+        )
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("1500"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='WALLET-ROI-001',
+        )
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.BONUS,
+            amount=Decimal("500"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='WALLET-BONUS-001',
+        )
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("999"),
+            status=Transaction.Status.FAILED,
+            tx_reference='WALLET-FAILED-001',
+        )
+
+    def test_wallet_service_exposes_current_balance_breakdown(self):
+        self.assertEqual(WalletService.get_available_balance(self.user), Decimal("8000"))
+        self.assertEqual(WalletService.get_reserved_balance(self.user), Decimal("2000"))
+        self.assertEqual(WalletService.get_total_balance(self.user), Decimal("10000"))
+        self.assertEqual(WalletService.get_withdrawable_amount(self.user), Decimal("8000"))
+
+    def test_wallet_service_aggregates_invested_capital_and_realized_gains(self):
+        self.assertEqual(WalletService.get_total_invested_capital(self.user), Decimal("12000"))
+        self.assertEqual(WalletService.get_realized_gains(self.user), Decimal("2000"))
