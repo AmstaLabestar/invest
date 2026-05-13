@@ -221,8 +221,11 @@ def notify_new_tier(sender, instance, created, **kwargs):
         notifications = [
             Notification(
                 user=user,
-                title="Nouveau Palier VIP Disponible",
-                message=f"Decouvrez le niveau '{instance.name}' ! Rendement attractif garanti. Ne ratez pas cette opportunite !"
+                title="Nouvelle categorie disponible",
+                message=(
+                    f"Decouvrez la categorie '{instance.name}' et ses conditions "
+                    "d'investissement."
+                )
             ) for user in users
         ]
         Notification.objects.bulk_create(notifications)

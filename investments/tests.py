@@ -1,5 +1,7 @@
 from decimal import Decimal
+from io import StringIO
 
+from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -308,3 +310,50 @@ class WalletServiceTests(TestCase):
     def test_wallet_service_aggregates_invested_capital_and_realized_gains(self):
         self.assertEqual(WalletService.get_total_invested_capital(self.user), Decimal("12000"))
         self.assertEqual(WalletService.get_realized_gains(self.user), Decimal("2000"))
+
+
+class CategoryCatalogTests(TestCase):
+    def setUp(self):
+        call_command('seed_data', stdout=StringIO())
+
+    def test_seed_data_creates_catalog_matching_cahier_thresholds(self):
+        expected_catalog = [
+            ('Standard', Decimal('5000'), Decimal('9999')),
+            ('Bronze', Decimal('10000'), Decimal('24999')),
+            ('Argent', Decimal('25000'), Decimal('49999')),
+            ('Or', Decimal('50000'), Decimal('74999')),
+            ('Diamant', Decimal('75000'), Decimal('149999')),
+            ('VIP', Decimal('150000'), Decimal('1249999')),
+            ('Partenaire 1', Decimal('1250000'), Decimal('3499999')),
+            ('Partenaire 2', Decimal('3500000'), None),
+        ]
+
+        tiers = list(
+            InvestmentTier.objects.order_by('level').values_list(
+                'name',
+                'min_amount',
+                'max_amount',
+            )
+        )
+
+        self.assertEqual(tiers, expected_catalog)
+        self.assertEqual(InvestmentTier.objects.count(), 8)
+        self.assertFalse(InvestmentTier.objects.filter(name='Platine').exists())
+
+    def test_amount_lookup_resolves_to_expected_category(self):
+        expected_mapping = {
+            Decimal('5000'): 'Standard',
+            Decimal('10000'): 'Bronze',
+            Decimal('25000'): 'Argent',
+            Decimal('50000'): 'Or',
+            Decimal('75000'): 'Diamant',
+            Decimal('150000'): 'VIP',
+            Decimal('1250000'): 'Partenaire 1',
+            Decimal('3500000'): 'Partenaire 2',
+        }
+
+        for amount, expected_name in expected_mapping.items():
+            with self.subTest(amount=amount):
+                tier = InvestmentTier.get_tier_by_amount(amount)
+                self.assertIsNotNone(tier)
+                self.assertEqual(tier.name, expected_name)
