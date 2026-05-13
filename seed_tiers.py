@@ -1,92 +1,159 @@
 import os
+
 import django
+from django.db import transaction
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 from investments.models import InvestmentTier
-from django.db import transaction
+
 
 TIERS = [
     {
-        'name': 'Bronze', 'level': 1, 'badge': '🥉', 'min_amount': 6000, 
-        'max_amount': 24999, 'daily_rate': 0.0120, 'monthly_rate': 0.36, 
-        'cycle_days': 30, 'badge_color': 'CD7F32', 'icon': 'bronze',
+        'name': 'Standard',
+        'level': 1,
+        'badge': 'STD',
+        'min_amount': 5000,
+        'max_amount': 9999,
+        'daily_rate': 0.1000,
+        'monthly_rate': 3.00,
+        'cycle_days': 30,
+        'badge_color': '2563EB',
+        'icon': 'standard',
         'advantages': [
-            'Accès plateforme', 
-            'Support standard', 
-            'Notifications SMS', 
-            'Retrait à partir de 1000 XOF'
-        ]
+            'Acces au catalogue de base',
+            'Suivi simple des gains',
+        ],
     },
     {
-        'name': 'Argent', 'level': 2, 'badge': '🥈', 'min_amount': 25000, 
-        'max_amount': 74999, 'daily_rate': 0.0150, 'monthly_rate': 0.45, 
-        'cycle_days': 45, 'badge_color': 'C0C0C0', 'icon': 'silver',
+        'name': 'Bronze',
+        'level': 2,
+        'badge': 'BRZ',
+        'min_amount': 10000,
+        'max_amount': 24999,
+        'daily_rate': 0.1000,
+        'monthly_rate': 3.00,
+        'cycle_days': 30,
+        'badge_color': 'B45309',
+        'icon': 'bronze',
         'advantages': [
-            'Tous avantages Bronze', 
-            'Support prioritaire', 
-            'Rapports mensuels détaillés', 
-            'Bonus fidélité +10%', 
-            'Retrait instantané'
-        ]
+            'Support standard',
+            'Historique de souscription detaille',
+        ],
     },
     {
-        'name': 'Or', 'level': 3, 'badge': '🥇', 'min_amount': 75000, 
-        'max_amount': 249999, 'daily_rate': 0.0180, 'monthly_rate': 0.54, 
-        'cycle_days': 60, 'badge_color': 'FFD700', 'icon': 'gold',
+        'name': 'Argent',
+        'level': 3,
+        'badge': 'ARG',
+        'min_amount': 25000,
+        'max_amount': 49999,
+        'daily_rate': 0.1000,
+        'monthly_rate': 3.00,
+        'cycle_days': 30,
+        'badge_color': '6B7280',
+        'icon': 'silver',
         'advantages': [
-            'Tous avantages Argent', 
-            'Gestionnaire de compte dédié', 
-            'Analyses de marché hebdomadaires', 
-            'Bonus fidélité +20%', 
-            'Accès produits exclusifs', 
-            'Assurance capital'
-        ]
+            'Visibilite etendue sur les gains',
+            'Traitement prioritaire des demandes',
+        ],
     },
     {
-        'name': 'Diamant', 'level': 4, 'badge': '💎', 'min_amount': 250000, 
-        'max_amount': 999999, 'daily_rate': 0.0200, 'monthly_rate': 0.60, 
-        'cycle_days': 90, 'badge_color': 'B9F2FF', 'icon': 'diamond',
+        'name': 'Or',
+        'level': 4,
+        'badge': 'OR',
+        'min_amount': 50000,
+        'max_amount': 74999,
+        'daily_rate': 0.1300,
+        'monthly_rate': 3.90,
+        'cycle_days': 30,
+        'badge_color': 'CA8A04',
+        'icon': 'gold',
         'advantages': [
-            'Tous avantages Or', 
-            'Conseiller VIP 24/7', 
-            'Stratégies personnalisées', 
-            'Bonus fidélité +30%', 
-            'Événements exclusifs', 
-            'Assurance capital + gains 50%', 
-            'Retrait sans frais'
-        ]
+            'Accompagnement renforce',
+            'Projection de gains avancee',
+        ],
     },
     {
-        'name': 'Platine', 'level': 5, 'badge': '👑', 'min_amount': 1000000, 
-        'max_amount': None, 'daily_rate': 0.0250, 'monthly_rate': 0.75, 
-        'cycle_days': 120, 'badge_color': 'E5E4E2', 'icon': 'crown',
+        'name': 'Diamant',
+        'level': 5,
+        'badge': 'DIA',
+        'min_amount': 75000,
+        'max_amount': 149999,
+        'daily_rate': 0.1300,
+        'monthly_rate': 3.90,
+        'cycle_days': 30,
+        'badge_color': '0EA5E9',
+        'icon': 'diamond',
         'advantages': [
-            'Tous avantages Diamant', 
-            'Équipe dédiée', 
-            'Stratégie sur mesure', 
-            'Bonus fidélité +50%', 
-            'Participation aux décisions', 
-            'Assurance totale (capital + gains)', 
-            'Retraits illimités sans frais', 
-            'Invitations événements internationaux'
-        ]
-    }
+            'Parcours premium',
+            'Acces prioritaire aux operations',
+        ],
+    },
+    {
+        'name': 'VIP',
+        'level': 6,
+        'badge': 'VIP',
+        'min_amount': 150000,
+        'max_amount': 1249999,
+        'daily_rate': 0.1300,
+        'monthly_rate': 3.90,
+        'cycle_days': 30,
+        'badge_color': '7C3AED',
+        'icon': 'vip',
+        'advantages': [
+            'Support VIP',
+            'Suivi renforce des souscriptions',
+        ],
+    },
+    {
+        'name': 'Partenaire 1',
+        'level': 7,
+        'badge': 'P1',
+        'min_amount': 1250000,
+        'max_amount': 3499999,
+        'daily_rate': 0.1500,
+        'monthly_rate': 4.50,
+        'cycle_days': 30,
+        'badge_color': '059669',
+        'icon': 'partner-1',
+        'advantages': [
+            'Bonus partenaire eligible',
+            'Pilotage avance du portefeuille',
+        ],
+    },
+    {
+        'name': 'Partenaire 2',
+        'level': 8,
+        'badge': 'P2',
+        'min_amount': 3500000,
+        'max_amount': None,
+        'daily_rate': 0.1500,
+        'monthly_rate': 4.50,
+        'cycle_days': 30,
+        'badge_color': '065F46',
+        'icon': 'partner-2',
+        'advantages': [
+            'Bonus partenaire maximal',
+            'Accompagnement prioritaire et dedie',
+        ],
+    },
 ]
+
 
 def seed_tiers():
     with transaction.atomic():
-        print("Suppression des anciens paliers...")
+        print("Suppression des anciennes categories...")
         InvestmentTier.objects.all().delete()
-        
-        print("Insertion des nouveaux paliers...")
+
+        print("Insertion du catalogue conforme au cahier...")
         for data in TIERS:
-            # max_amount peut être null pour le dernier niveau, on n'a pas besoin de nettoyage car python gère None -> null.
             tier = InvestmentTier(**data)
             tier.save()
-            print(f"✅ Palier '{tier.name}' inséré.")
+            print(f"Categorie '{tier.name}' inseree.")
+
 
 if __name__ == '__main__':
     seed_tiers()
-    print("🚀 Seed complet !")
+    print("Catalogue categories insere.")

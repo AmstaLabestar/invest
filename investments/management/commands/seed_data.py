@@ -26,11 +26,11 @@ BOOSTERS = [
 
 
 class Command(BaseCommand):
-    help = 'Peuple la base de donnees avec les paliers et boosters initiaux'
+    help = 'Peuple la base de donnees avec le catalogue de categories et les boosters'
 
     def handle(self, *args, **kwargs):
         with transaction.atomic():
-            self.stdout.write('Creation des paliers...')
+            self.stdout.write('Creation du catalogue de categories...')
             for tier_data in TIERS:
                 defaults = tier_data.copy()
                 name = defaults.pop('name')
@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     defaults={'name': name, 'level': level, **defaults},
                 )
                 action = 'cree' if created else 'mis a jour'
-                self.stdout.write(f"- Palier {tier.name} {action}")
+                self.stdout.write(f"- Categorie {tier.name} {action}")
 
             self.stdout.write('Creation des boosters...')
             for booster_data in BOOSTERS:
@@ -53,4 +53,4 @@ class Command(BaseCommand):
                 action = 'cree' if created else 'mis a jour'
                 self.stdout.write(f"- Booster {booster.name} {action}")
 
-        self.stdout.write(self.style.SUCCESS('Paliers et boosters generes avec succes.'))
+        self.stdout.write(self.style.SUCCESS('Catalogue categories et boosters generes avec succes.'))
