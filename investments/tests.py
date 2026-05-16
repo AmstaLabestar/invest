@@ -63,9 +63,37 @@ class WithdrawalRequestTests(TestCase):
             balance=Decimal("10000"),
         )
         SystemSettings.objects.create(min_withdrawal=Decimal("5000"))
+        self.tier = InvestmentTier.objects.create(
+            name="Bronze",
+            level=2,
+            min_amount=Decimal("10000"),
+            max_amount=Decimal("24999"),
+            daily_rate=Decimal("0.1000"),
+            monthly_rate=Decimal("3.0000"),
+            cycle_days=30,
+        )
+        self.investment = Investment.objects.create(
+            user=self.user,
+            tier=self.tier,
+            amount_invested=Decimal("10000"),
+            daily_rate_snapshot=Decimal("0.1000"),
+            status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=30),
+        )
+        Investment.objects.filter(id=self.investment.id).update(
+            start_date=timezone.now() - timedelta(days=4)
+        )
 
     def test_withdraw_request_creates_pending_transaction_and_reserves_balance(self):
         self.client.force_login(self.user)
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("10000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='WITHDRAW-ROI-001',
+            provider='System Daily Yield',
+        )
 
         response = self.client.post(
             reverse('withdraw_request'),
@@ -100,7 +128,7 @@ class WithdrawalRequestTests(TestCase):
         response = self.client.post(
             reverse('withdraw_request'),
             {
-                'amount': '15000',
+                'amount': '5000',
                 'provider': 'Orange Money',
                 'phone': '+22670000011',
             },
@@ -109,6 +137,38 @@ class WithdrawalRequestTests(TestCase):
 
         self.assertRedirects(response, reverse('booster'))
 
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, Decimal("10000"))
+        self.assertFalse(
+            Transaction.objects.filter(
+                user=self.user,
+                tx_type=Transaction.TransactionType.WITHDRAWAL,
+            ).exists()
+        )
+
+    def test_withdraw_request_is_blocked_for_three_days_after_purchase(self):
+        Investment.objects.filter(id=self.investment.id).update(start_date=timezone.now() - timedelta(days=1))
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("10000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='WITHDRAW-ROI-LOCKED-001',
+            provider='System Daily Yield',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('withdraw_request'),
+            {
+                'amount': '5000',
+                'provider': 'Orange Money',
+                'phone': '+22670000011',
+            },
+            HTTP_REFERER=reverse('booster'),
+        )
+
+        self.assertRedirects(response, reverse('booster'))
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, Decimal("10000"))
         self.assertFalse(
@@ -268,12 +328,16 @@ class WalletServiceTests(TestCase):
             monthly_rate=Decimal("0.4500"),
             cycle_days=45,
         )
-        Investment.objects.create(
+        self.investment = Investment.objects.create(
             user=self.user,
             tier=self.tier,
             amount_invested=Decimal("12000"),
             daily_rate_snapshot=Decimal("0.0150"),
             status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=45),
+        )
+        Investment.objects.filter(id=self.investment.id).update(
+            start_date=timezone.now() - timedelta(days=5)
         )
         Transaction.objects.create(
             user=self.user,
@@ -308,11 +372,79 @@ class WalletServiceTests(TestCase):
         self.assertEqual(WalletService.get_available_balance(self.user), Decimal("8000"))
         self.assertEqual(WalletService.get_reserved_balance(self.user), Decimal("2000"))
         self.assertEqual(WalletService.get_total_balance(self.user), Decimal("10000"))
-        self.assertEqual(WalletService.get_withdrawable_amount(self.user), Decimal("8000"))
+        self.assertEqual(WalletService.get_withdrawable_amount(self.user), Decimal("0"))
+        self.assertTrue(WalletService.is_withdrawal_unlocked(self.user))
 
     def test_wallet_service_aggregates_invested_capital_and_realized_gains(self):
         self.assertEqual(WalletService.get_total_invested_capital(self.user), Decimal("12000"))
         self.assertEqual(WalletService.get_realized_gains(self.user), Decimal("2000"))
+        self.assertEqual(WalletService.get_consumed_gains(self.user), Decimal("2000"))
+
+    def test_wallet_service_limits_withdrawable_amount_to_realized_gains(self):
+        eligible_user = User.objects.create_user(
+            username="wallet-eligible",
+            password="TestPass123!",
+            phone_number="+22670000018",
+            balance=Decimal("5000"),
+        )
+        eligible_tier = InvestmentTier.objects.create(
+            name="Wallet Bronze",
+            level=9,
+            min_amount=Decimal("10000"),
+            max_amount=Decimal("19999"),
+            daily_rate=Decimal("0.1000"),
+            monthly_rate=Decimal("3.0000"),
+            cycle_days=30,
+        )
+        eligible_investment = Investment.objects.create(
+            user=eligible_user,
+            tier=eligible_tier,
+            amount_invested=Decimal("10000"),
+            daily_rate_snapshot=Decimal("0.1000"),
+            status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=30),
+        )
+        Investment.objects.filter(id=eligible_investment.id).update(
+            start_date=timezone.now() - timedelta(days=4)
+        )
+        Transaction.objects.create(
+            user=eligible_user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("2500"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='WALLET-ELIGIBLE-ROI-001',
+        )
+
+        self.assertEqual(WalletService.get_withdrawable_amount(eligible_user), Decimal("2500"))
+
+    def test_wallet_service_blocks_withdrawal_during_three_day_lock(self):
+        locked_user = User.objects.create_user(
+            username="wallet-locked",
+            password="TestPass123!",
+            phone_number="+22670000019",
+            balance=Decimal("5000"),
+        )
+        locked_investment = Investment.objects.create(
+            user=locked_user,
+            tier=self.tier,
+            amount_invested=Decimal("12000"),
+            daily_rate_snapshot=Decimal("0.0150"),
+            status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=45),
+        )
+        Investment.objects.filter(id=locked_investment.id).update(
+            start_date=timezone.now() - timedelta(days=1)
+        )
+        Transaction.objects.create(
+            user=locked_user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("3000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='WALLET-LOCKED-ROI-001',
+        )
+
+        self.assertFalse(WalletService.is_withdrawal_unlocked(locked_user))
+        self.assertEqual(WalletService.get_withdrawable_amount(locked_user), Decimal("0"))
 
 
 class CategoryCatalogTests(TestCase):

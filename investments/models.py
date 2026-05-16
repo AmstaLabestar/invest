@@ -86,7 +86,10 @@ class Investment(models.Model):
     def accumulated_gains(self):
         rate = self.daily_rate_snapshot if self.daily_rate_snapshot else (self.tier.daily_rate if self.tier else Decimal("0"))
         days = min(self.days_passed, self.tier.cycle_days if self.tier else self.days_passed)
-        return self.amount_invested * rate * days
+        gains = self.amount_invested * rate * days
+        if self.tier and self.tier.has_fixed_partner_bonus:
+            gains += Decimal("50000") * (days // 15)
+        return gains
 
     def __str__(self):
         tier_name = self.tier.name if self.tier else "Inconnu"

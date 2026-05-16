@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db.models import Sum
@@ -50,11 +51,50 @@ class WalletService:
             queryset = queryset.filter(created_at__gte=start_date)
         return queryset.aggregate(Sum('amount'))['amount__sum'] or Decimal("0")
 
+    @staticmethod
+    def get_consumed_gains(user):
+        return (
+            Transaction.objects.filter(
+                user=user,
+                tx_type=Transaction.TransactionType.WITHDRAWAL,
+                status__in=[Transaction.Status.PENDING, Transaction.Status.SUCCESS],
+            ).aggregate(Sum('amount'))['amount__sum']
+            or Decimal("0")
+        )
+
+    @staticmethod
+    def get_withdrawal_unlock_at(user):
+        latest_investment = (
+            Investment.objects.filter(
+                user=user,
+                status__in=[
+                    Investment.Status.PENDING,
+                    Investment.Status.ACTIVE,
+                    Investment.Status.COMPLETED,
+                ],
+            )
+            .order_by('-start_date')
+            .first()
+        )
+        if latest_investment is None:
+            return None
+        return latest_investment.start_date + timedelta(days=3)
+
     @classmethod
-    def get_withdrawable_amount(cls, user):
-        # Current behavior keeps withdrawals tied to the available balance.
-        # The next branch will switch this to gains-only policy.
-        return cls.get_available_balance(user)
+    def is_withdrawal_unlocked(cls, user, reference_time=None):
+        if reference_time is None:
+            reference_time = timezone.now()
+        unlock_at = cls.get_withdrawal_unlock_at(user)
+        return unlock_at is None or reference_time >= unlock_at
+
+    @classmethod
+    def get_withdrawable_amount(cls, user, reference_time=None):
+        if not cls.is_withdrawal_unlocked(user, reference_time=reference_time):
+            return Decimal("0")
+
+        gain_based_amount = cls.get_realized_gains(user) - cls.get_consumed_gains(user)
+        gain_based_amount = max(gain_based_amount, Decimal("0"))
+        return min(cls.get_available_balance(user), gain_based_amount)
 
 
 class YieldRuleService:

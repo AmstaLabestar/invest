@@ -89,6 +89,8 @@ def home(request):
     # Calculate pending withdrawals to show reserved money
     pending_withdrawals = WalletService.get_reserved_balance(user)
     total_balance = WalletService.get_total_balance(user)
+    withdrawable_amount = WalletService.get_withdrawable_amount(user)
+    withdraw_unlock_at = WalletService.get_withdrawal_unlock_at(user)
 
     context = {
         'solde_total': "{:,.0f}".format(total_balance).replace(',', '.'),
@@ -98,6 +100,8 @@ def home(request):
         'active_booster': active_booster,
         'investi_total': "{:,.0f}".format(investi_total).replace(',', '.'),
         'pending_withdrawals': "{:,.0f}".format(pending_withdrawals).replace(',', '.') if pending_withdrawals > 0 else 0,
+        'withdrawable_amount': "{:,.0f}".format(withdrawable_amount).replace(',', '.'),
+        'withdraw_unlock_at': withdraw_unlock_at,
         'produits_actifs': produits_actifs,
         'progression_mois': progression_mois,
         'progression_max': progression_max,
@@ -233,6 +237,8 @@ def booster(request):
     
     # pending withdrawals for booster view
     pending_withdrawals = WalletService.get_reserved_balance(user)
+    withdrawable_amount = WalletService.get_withdrawable_amount(user)
+    withdraw_unlock_at = WalletService.get_withdrawal_unlock_at(user)
 
     context = {
         'boosters': boosters,
@@ -243,6 +249,8 @@ def booster(request):
         'bonus_progress_percent': bonus_progress_percent,
         'referral_code': referral_code,
         'pending_withdrawals': "{:,.0f}".format(pending_withdrawals).replace(',', '.') if pending_withdrawals > 0 else 0,
+        'withdrawable_amount': "{:,.0f}".format(withdrawable_amount).replace(',', '.'),
+        'withdraw_unlock_at': withdraw_unlock_at,
     }
     
     return render(request, 'booster.html', context)
@@ -268,9 +276,16 @@ def withdraw_request(request):
                 with transaction.atomic():
                     # Verrouillage de la ligne Utilisateur pour éviter le double-spend (Faille de course)
                     safe_user = User.objects.select_for_update().get(id=request.user.id)
+                    unlock_at = WalletService.get_withdrawal_unlock_at(safe_user)
+                    
+                    if not WalletService.is_withdrawal_unlocked(safe_user):
+                        unlock_label = unlock_at.strftime('%d/%m/%Y %H:%M') if unlock_at else 'plus tard'
+                        messages.error(request, f"Les retraits sont disponibles 72h apres achat. Prochain retrait possible le {unlock_label}.")
+                        next_url = request.META.get('HTTP_REFERER', 'booster')
+                        return redirect(next_url)
                     
                     if amount > WalletService.get_withdrawable_amount(safe_user):
-                        messages.error(request, "Solde insuffisant pour ce retrait.")
+                        messages.error(request, "Montant superieur aux gains actuellement retirables.")
                         next_url = request.META.get('HTTP_REFERER', 'booster')
                         return redirect(next_url)
                     else:
