@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from users.models import Notification
 
-from .models import Booster, Investment, InvestmentTier, SystemSettings, Transaction
+from .models import Booster, Investment, InvestmentTier, SystemSettings, Transaction, UserBooster
 from .services import CalculationService, WalletService, YieldRuleService
 from .tasks import calculate_binary_bonus, calculate_daily_roi, process_referral_bonuses
 
@@ -774,3 +774,146 @@ class ReferralModelTests(TestCase):
         self.sponsor.refresh_from_db()
         self.assertEqual(self.sponsor.balance, Decimal("0"))
         self.assertIn('desactive', result)
+
+
+class ClientJourneySmokeTests(TestCase):
+    def setUp(self):
+        self.password = "ClientPass123!"
+        self.user = User.objects.create_user(
+            username="mobile-client",
+            password=self.password,
+            first_name="Awa",
+            last_name="Traore",
+            email="awa@example.com",
+            phone_number="+22670000030",
+            balance=Decimal("30000"),
+            points=25,
+        )
+        self.tier = InvestmentTier.objects.create(
+            name="Bronze",
+            level=2,
+            min_amount=Decimal("10000"),
+            max_amount=Decimal("24999"),
+            daily_rate=Decimal("0.1000"),
+            monthly_rate=Decimal("3.0000"),
+            cycle_days=30,
+            badge="B",
+            is_active=True,
+        )
+        self.booster = Booster.objects.create(
+            name="Boost Start",
+            multiplier=Decimal("1.50"),
+            price=Decimal("2000"),
+            duration_days=7,
+            is_active=True,
+        )
+        self.investment = Investment.objects.create(
+            user=self.user,
+            tier=self.tier,
+            amount_invested=Decimal("10000"),
+            daily_rate_snapshot=Decimal("0.1000"),
+            status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=30),
+        )
+        Investment.objects.filter(id=self.investment.id).update(
+            start_date=timezone.now() - timedelta(days=5)
+        )
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("2500"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference="CLIENT-ROI-001",
+            provider="System Daily Yield",
+        )
+        Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TransactionType.BONUS,
+            amount=Decimal("1000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference="CLIENT-BONUS-001",
+            provider="Referral Bonus",
+        )
+        Notification.objects.create(
+            user=self.user,
+            title="Bonus parrainage",
+            message="Votre bonus de parrainage est disponible.",
+        )
+
+    def test_public_auth_pages_render(self):
+        for route_name in ("login", "register"):
+            with self.subTest(route=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertEqual(response.status_code, 200)
+
+    def test_register_flow_creates_client_and_opens_home(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "first_name": "Fatou",
+                "last_name": "Ouedraogo",
+                "username": "new-mobile-client",
+                "phone_number": "70000031",
+                "password1": "NewClientPass123!",
+                "password2": "NewClientPass123!",
+            },
+        )
+
+        self.assertRedirects(response, reverse("home"))
+        self.assertTrue(User.objects.filter(username="new-mobile-client").exists())
+
+    def test_authenticated_client_pages_render_with_real_data(self):
+        self.client.force_login(self.user)
+        route_names = [
+            "home",
+            "trade",
+            "booster",
+            "profile",
+            "notifications",
+            "settings_history",
+            "settings_info",
+            "settings_password",
+            "settings_points",
+            "settings_support",
+            "settings_theme",
+        ]
+
+        for route_name in route_names:
+            with self.subTest(route=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertEqual(response.status_code, 200)
+
+    def test_trade_post_creates_pending_payment_flow(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("trade"),
+            {
+                "tier_id": self.tier.id,
+                "amount": "10000",
+                "provider": "Orange Money",
+                "phone": "70000030",
+            },
+        )
+
+        self.assertRedirects(response, reverse("trade"))
+        tx = Transaction.objects.get(tx_reference__startswith="PAY-", user=self.user)
+        self.assertEqual(tx.tx_type, Transaction.TransactionType.PAY_INVEST)
+        self.assertEqual(tx.status, Transaction.Status.PENDING)
+        self.assertEqual(tx.related_investment.status, Investment.Status.PENDING)
+
+    def test_booster_purchase_keeps_client_flow_renderable(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("booster"),
+            {"booster_id": self.booster.id},
+        )
+
+        self.assertRedirects(response, reverse("booster"))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, Decimal("28000"))
+        self.assertTrue(UserBooster.objects.filter(user=self.user, booster=self.booster).exists())
+
+        follow_up = self.client.get(reverse("booster"))
+        self.assertEqual(follow_up.status_code, 200)

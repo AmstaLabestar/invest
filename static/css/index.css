@@ -1557,4 +1557,39 @@ body.theme-light input:-webkit-autofill:active {
   .tree-grid {
     grid-template-columns: 1fr;
   }
+
+  .list-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .list-item > .text-right {
+    width: 100%;
+    text-align: left;
+    padding-left: 3.25rem;
+  }
+
+  .menu-item {
+    min-height: 4rem;
+    padding: 0.85rem;
+  }
+
+  .menu-item-main {
+    gap: 0.7rem;
+  }
+
+  .page-topbar {
+    grid-template-columns: 2.65rem 1fr 2.65rem;
+  }
+
+  .profile-avatar {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 1.55rem;
+  }
+
+  .hero-foot,
+  .hero-metrics {
+    flex-wrap: wrap;
+  }
 }
