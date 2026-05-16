@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.conf import settings
 
@@ -43,6 +45,10 @@ class InvestmentTier(models.Model):
             return self.daily_rate * 100
         return 0
 
+    @property
+    def has_fixed_partner_bonus(self):
+        return self.name in {'Partenaire 1', 'Partenaire 2'}
+
     @classmethod
     def get_tier_by_amount(cls, amount):
         from django.db.models import Q
@@ -78,13 +84,9 @@ class Investment(models.Model):
 
     @property
     def accumulated_gains(self):
-        # Utilisation de la nouvelle formule des interets composes
-        rate = float(self.daily_rate_snapshot) if self.daily_rate_snapshot else (float(self.tier.daily_rate) if self.tier else 0)
-        capital = float(self.amount_invested)
-        days = self.days_passed
-        # Capital x (1 + Taux_Journalier)^Jours - Capital
-        gain_total = capital * ((1 + rate) ** days)
-        return gain_total - capital
+        rate = self.daily_rate_snapshot if self.daily_rate_snapshot else (self.tier.daily_rate if self.tier else Decimal("0"))
+        days = min(self.days_passed, self.tier.cycle_days if self.tier else self.days_passed)
+        return self.amount_invested * rate * days
 
     def __str__(self):
         tier_name = self.tier.name if self.tier else "Inconnu"

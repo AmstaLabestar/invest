@@ -1,15 +1,18 @@
 from decimal import Decimal
+from datetime import timedelta
 from io import StringIO
 
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from users.models import Notification
 
 from .models import Booster, Investment, InvestmentTier, SystemSettings, Transaction
-from .services import WalletService
+from .services import CalculationService, WalletService, YieldRuleService
+from .tasks import calculate_daily_roi
 
 
 User = get_user_model()
@@ -357,3 +360,131 @@ class CategoryCatalogTests(TestCase):
                 tier = InvestmentTier.get_tier_by_amount(amount)
                 self.assertIsNotNone(tier)
                 self.assertEqual(tier.name, expected_name)
+
+
+class YieldRuleTests(TestCase):
+    def setUp(self):
+        self.or_tier = InvestmentTier.objects.create(
+            name="Or",
+            level=4,
+            min_amount=Decimal("50000"),
+            max_amount=Decimal("74999"),
+            daily_rate=Decimal("0.1300"),
+            monthly_rate=Decimal("3.9000"),
+            cycle_days=30,
+        )
+        self.partner_tier = InvestmentTier.objects.create(
+            name="Partenaire 1",
+            level=7,
+            min_amount=Decimal("1250000"),
+            max_amount=Decimal("3499999"),
+            daily_rate=Decimal("0.1500"),
+            monthly_rate=Decimal("4.5000"),
+            cycle_days=30,
+        )
+
+    def test_simulation_uses_linear_daily_gains_for_standard_categories(self):
+        result = CalculationService.simulate_investment(Decimal("50000"), self.or_tier.id)
+
+        self.assertEqual(result['taux_journalier_pourcent'], 13.0)
+        self.assertEqual(result['gain_net'], 195000.0)
+        self.assertEqual(result['gain_total'], 245000.0)
+        self.assertEqual(result['bonus_partenaire_total'], 0.0)
+
+    def test_simulation_includes_fixed_partner_bonus(self):
+        result = CalculationService.simulate_investment(Decimal("1250000"), self.partner_tier.id)
+
+        self.assertEqual(result['taux_journalier_pourcent'], 15.0)
+        self.assertEqual(result['bonus_partenaire_total'], 100000.0)
+        self.assertEqual(result['gain_net'], 5725000.0)
+        self.assertEqual(result['gain_total'], 6975000.0)
+
+    def test_daily_roi_task_is_idempotent_and_pays_partner_bonus_by_checkpoint(self):
+        user = User.objects.create_user(
+            username="partner-user",
+            password="TestPass123!",
+            phone_number="+22670000016",
+            balance=Decimal("0"),
+        )
+        investment = Investment.objects.create(
+            user=user,
+            tier=self.partner_tier,
+            amount_invested=Decimal("1250000"),
+            daily_rate_snapshot=Decimal("0.1500"),
+            status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=30),
+        )
+        Investment.objects.filter(id=investment.id).update(
+            start_date=timezone.now() - timedelta(days=16)
+        )
+        investment.refresh_from_db()
+
+        calculate_daily_roi()
+        user.refresh_from_db()
+
+        self.assertEqual(user.balance, Decimal("237500.00"))
+        self.assertEqual(
+            Transaction.objects.filter(
+                user=user,
+                tx_type=Transaction.TransactionType.ROI,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Transaction.objects.filter(
+                user=user,
+                tx_type=Transaction.TransactionType.BONUS,
+                provider__startswith='Partner Bonus Day',
+            ).count(),
+            1,
+        )
+
+        calculate_daily_roi()
+        user.refresh_from_db()
+
+        self.assertEqual(user.balance, Decimal("237500.00"))
+        self.assertEqual(
+            Transaction.objects.filter(
+                user=user,
+                tx_type=Transaction.TransactionType.ROI,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Transaction.objects.filter(
+                user=user,
+                tx_type=Transaction.TransactionType.BONUS,
+                provider__startswith='Partner Bonus Day',
+            ).count(),
+            1,
+        )
+
+    def test_calculate_daily_returns_reports_linear_gains(self):
+        user = User.objects.create_user(
+            username="yield-user",
+            password="TestPass123!",
+            phone_number="+22670000017",
+            balance=Decimal("0"),
+        )
+        investment = Investment.objects.create(
+            user=user,
+            tier=self.or_tier,
+            amount_invested=Decimal("50000"),
+            daily_rate_snapshot=Decimal("0.1300"),
+            status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=30),
+        )
+        Investment.objects.filter(id=investment.id).update(
+            start_date=timezone.now() - timedelta(days=10)
+        )
+        investment.refresh_from_db()
+
+        result = CalculationService.calculate_daily_returns(investment)
+
+        self.assertEqual(result['jours_ecoules'], 10)
+        self.assertEqual(result['bonus_partenaire_total'], 0.0)
+        self.assertEqual(result['gains'], 65000.0)
+        self.assertEqual(
+            YieldRuleService.calculate_cumulative_gains(investment),
+            Decimal("65000.00"),
+        )

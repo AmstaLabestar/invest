@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 import json
 from .models import Investment, Transaction, Booster, UserBooster, SystemSettings, InvestmentTier
-from .services import CalculationService, WalletService
+from .services import CalculationService, WalletService, YieldRuleService
 from users.models import Notification
 from django.db.models import Sum
 from decimal import Decimal
@@ -84,11 +84,7 @@ def home(request):
     active_booster = UserBooster.objects.filter(user=request.user, is_active=True).first()
     
     # Calcul estimé du gain journalier en fonction des investissements actifs
-    base_gains_jour = sum(i.amount_invested * i.daily_rate_snapshot for i in active_invs)
-    if active_booster:
-        gains_jour = base_gains_jour * active_booster.booster.multiplier
-    else:
-        gains_jour = base_gains_jour
+    gains_jour = sum(YieldRuleService.calculate_daily_profit(i) for i in active_invs)
 
     # Calculate pending withdrawals to show reserved money
     pending_withdrawals = WalletService.get_reserved_balance(user)
