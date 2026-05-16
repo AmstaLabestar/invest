@@ -12,9 +12,9 @@
                     <i class="ph-duotone ph-compass-tool"></i>
                     Investissement guide
                 </div>
-                <h2>Choisissez une categorie adaptee a votre capital</h2>
+                <h2>Categories d'investissement</h2>
             </div>
-            <div class="section-meta">Achat mobile en 2 etapes</div>
+            <div class="section-meta">Paiement Mobile Money</div>
         </div>
 
         <div class="asset-selector">
@@ -38,7 +38,7 @@
             <div class="chart-line-hint"></div>
             <div class="chart-head">
                 <div>
-                    <div class="chart-kicker">Simulation visuelle</div>
+                    <div class="chart-kicker">Projection</div>
                     <div class="chart-title" x-text="activeTierName || 'Categorie'"></div>
                     <div class="chart-rate" x-text="'+' + (activeTierROI * 100).toFixed(2) + '% journalier'"></div>
                 </div>
@@ -117,10 +117,6 @@
                     </label>
                 </div>
 
-                <div class="soft-note">
-                    Votre souscription est enregistree puis validee par l'equipe avant activation. L'ecran est pense pour un usage mobile et un paiement rapide sans surcharge.
-                </div>
-
                 <button type="submit" class="btn btn-primary">
                     <i class="ph-bold ph-arrow-up-right"></i>
                     Lancer la souscription
@@ -164,7 +160,6 @@
             <div class="empty-state">
                 <i class="ph-duotone ph-chart-line-up"></i>
                 <p>Aucune souscription active pour le moment.</p>
-                <p class="mini-label mt-2">Choisissez une categorie ci-dessus pour demarrer rapidement.</p>
             </div>
             {% endfor %}
         </div>
