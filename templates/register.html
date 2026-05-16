@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Créer un compte - InvestPlatform</title>
-    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=reloaded_v6">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=prod_ui_v1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.min.css">
     <script>
         if (localStorage.getItem('theme') === 'light') {
             document.documentElement.classList.add('theme-light');
@@ -14,92 +14,73 @@
         }
     </script>
 </head>
-<body style="min-height: 100vh; padding: 2rem 1.5rem; display: flex; flex-direction: column;">
-
-    <div style="text-align: center; margin-bottom: 2rem; margin-top: 2rem;">
-        <h1 class="text-2xl font-bold text-white m-0">Créer un compte</h1>
-        <p class="text-gray-400 mt-2 text-sm">Rejoignez-nous et commencez à investir dès aujourd'hui.</p>
-    </div>
-
-    <form method="POST" action="{% url 'register' %}" style="max-width: 400px; width: 100%; margin: 0 auto; flex-grow: 1;">
-        {% csrf_token %}
-        
-        {% if form.errors %}
-        <div style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
-            <ul style="color: #ef4444; font-size: 0.85rem; padding-left: 1rem; margin: 0;">
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <li>{{ field.label }}: {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-                {% for error in form.non_field_errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-
-        <style>
-            /* Style unifié pour les inputs générés par Django */
-            input[type="text"], input[type="password"], input[type="email"], input[type="number"] {
-                width: 100%; background-color: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; color: white; font-size: 1rem; outline: none; transition: all 0.2s; box-sizing: border-box; position: relative; z-index: 5;
-            }
-            input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
-            
-            /* Formattage des aides/erreurs */
-            .help-text { color: #9ca3af; font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.4; display: block; }
-            .help-text ul { padding-left: 1.25rem; margin: 0.25rem 0 0 0; }
-
-        </style>
-
-        {% for field in form %}
-        <div class="mb-4">
-            <label class="text-xs font-bold text-gray-300 uppercase tracking-widest mb-2" style="display: block;">
-                {{ field.label }} 
-                {% if field.field.required %}<span style="color: #ef4444; font-size: 1rem; font-weight: bold; margin-left: 2px;">*</span>{% endif %}
-            </label>
-            
-            {% if field.name == 'phone_number' %}
-            <div style="position: relative;">
-                <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-weight: bold; pointer-events: none; z-index: 10;">+226</span>
-                {{ field }}
-                <style>
-                    /* Décalage du texte pour accommoder le +226 fixe */
-                    input[name="phone_number"] { padding-left: 3.8rem !important; }
-                </style>
-            </div>
-            {% else %}
-            <div style="position: relative;">
-                {{ field }}
-            </div>
-            {% endif %}
-            
-            {% if field.name == 'password' or field.name == 'password1' %}
-                <span class="help-text">8 caractères minimum. Ne doit pas être un mot de passe trop commun.</span>
-            {% elif field.name == 'phone_number' %}
-                <div style="margin-top: 0.75rem; background-color: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 0.75rem; border-radius: 0 8px 8px 0;">
-                    <span style="color: #ef4444; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.25rem;">
-                        <i class="ph-fill ph-warning"></i> TRÈS IMPORTANT
-                    </span>
-                    <span style="color: #ef4444; font-size: 0.8rem; line-height: 1.4; display: block;">
-                        Veuillez renseigner un numéro <strong>Wave, Orange, MTN ou Moov Money</strong> actif. <br><strong>Attention : Ce numéro sera définitif et ne pourra plus être modifié après la création.</strong> Il sera utilisé pour recevoir vos retraits.
-                    </span>
+<body class="auth-page">
+    <main class="auth-shell">
+        <section class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="ph-bold ph-user-plus"></i>
                 </div>
-            {% endif %}
-        </div>
-        {% endfor %}
+                <div class="hero-eyebrow">Ouverture de compte</div>
+                <h1 class="auth-title">Demarrez avec une experience simple et fiable.</h1>
+                <p class="auth-copy">Chaque etape a ete pensee pour un usage mobile naturel, sans surcharge visuelle.</p>
+            </div>
 
-        <div style="margin-top: 2rem;">
-            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
-                Terminer l'inscription
-            </button>
-        </div>
-        
-        <div style="text-align: center; margin-top: 2rem; padding-bottom: 2rem;">
-            <p class="text-gray-400 text-sm m-0">Déjà un compte ?</p>
-            <a href="{% url 'login' %}" style="text-decoration: none; display: inline-block; margin-top: 0.5rem; color: #3b82f6; font-weight: bold;">Se connecter</a>
-        </div>
-    </form>
+            <form method="POST" action="{% url 'register' %}" class="form-stack">
+                {% csrf_token %}
 
+                {% if form.errors %}
+                <div class="alert-box error">
+                    <ul style="padding-left: 1rem;">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }} : {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% for field in form %}
+                <label class="field">
+                    <span class="field-label">
+                        {{ field.label }}
+                        {% if field.field.required %}<span style="color:#ff9cac;">*</span>{% endif %}
+                    </span>
+
+                    {% if field.name == 'phone_number' %}
+                    <div class="field-prefix">
+                        <span>+226</span>
+                        {{ field }}
+                    </div>
+                    {% else %}
+                    {{ field }}
+                    {% endif %}
+
+                    {% if field.name == 'password' or field.name == 'password1' %}
+                    <span class="help-text">8 caracteres minimum. Evitez les mots de passe trop communs.</span>
+                    {% elif field.name == 'phone_number' %}
+                    <div class="important-note">
+                        Utilisez un numero Mobile Money actif. Ce numero sera reutilise pour vos retraits et ne doit pas etre saisi a la legere.
+                    </div>
+                    {% endif %}
+                </label>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph-bold ph-check"></i>
+                    Terminer l'inscription
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Vous avez deja un compte ?
+                <a href="{% url 'login' %}" class="auth-link">Se connecter</a>
+            </div>
+        </section>
+    </main>
 </body>
 </html>

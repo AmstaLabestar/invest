@@ -2,159 +2,184 @@
 {% block title %}Accueil - InvestPlatform{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <div class="mb-4 text-gray-300" style="font-size: 1.1rem;">
-        Bonjour, {{ user.first_name|default:user.username|title }}
-    </div>
-
-    <div class="card bg-gradient-cyan mb-4" style="padding: 1.5rem; border-radius: 1.25rem;">
-        <div class="text-xs font-semibold mb-1" style="color: rgba(2, 44, 34, 0.7); font-weight: 600; text-transform: uppercase;">SOLDE TOTAL</div>
-        <div class="text-3xl font-bold {% if not pending_withdrawals or pending_withdrawals == 0 %}mb-4{% else %}mb-2{% endif %}" style="color: #022c22; font-size: 1.8rem;">{{ solde_total }} XOF</div>
-
+<div class="page-stack">
+    <section class="hero-card">
+        <div class="hero-eyebrow">Tableau de bord personnel</div>
+        <div class="hero-amount">{{ solde_total }} XOF</div>
+        <div class="hero-foot">
+            <span class="pill pill-soft">
+                <i class="ph-duotone ph-wallet"></i>
+                Solde total
+            </span>
+            <span class="pill pill-soft">
+                <i class="ph-duotone ph-medal"></i>
+                {{ points }} pts
+            </span>
+        </div>
         {% if pending_withdrawals and pending_withdrawals != 0 %}
-        <div class="mb-4" style="display: inline-block; background-color: rgba(245, 158, 11, 0.2); border: 1px dashed rgba(245, 158, 11, 0.6); padding: 5px 12px; border-radius: 8px;">
-            <p class="text-xs font-bold" style="color: #b45309; margin: 0;"><i class="ph-duotone ph-lock"></i> Reserve (retrait en cours) : {{ pending_withdrawals }} XOF</p>
+        <div class="hero-metrics">
+            <span class="status-pill warning">
+                <i class="ph-duotone ph-lock"></i>
+                {{ pending_withdrawals }} XOF en traitement
+            </span>
+            <span class="mini-label">Disponible au retrait: {{ withdrawable_amount }} XOF</span>
+        </div>
+        {% else %}
+        <div class="hero-metrics">
+            <span class="mini-label">Gains du mois: {{ gains_mois }} XOF</span>
+            <span class="mini-label">Disponible au retrait: {{ withdrawable_amount }} XOF</span>
         </div>
         {% endif %}
+    </section>
 
-        <div class="flex-between">
-            <div class="text-sm font-medium" style="color: #022c22; flex: 1;">
-                Gains du mois : +{{ gains_mois|floatformat:0 }}
-            </div>
-            <div class="text-sm font-bold" style="color: #022c22;">
-                Points : {{ points }}
-            </div>
-        </div>
-    </div>
-
-    <div class="grid-2-col mb-6" style="gap: 1rem;">
-        <div class="card card-dark p-4" style="border-radius: 1rem; border: none; background-color: #111827; position: relative; overflow: hidden;">
-            <div class="flex-between mb-2">
-                <div class="text-sm text-gray-400">Gains du jour</div>
+    <section class="metric-grid">
+        <article class="metric-card">
+            <div class="metric-label">
+                <span>Rendement du jour</span>
                 {% if active_booster %}
-                <div style="background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: bold; border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 4px; box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);">
-                    x{{ active_booster.booster.multiplier }} Actif
-                </div>
+                <span class="status-pill warning">x{{ active_booster.booster.multiplier }}</span>
                 {% endif %}
             </div>
-            <div class="text-xl font-bold mb-1" {% if active_booster %}style="color: #f59e0b;"{% endif %}>{{ gains_jour }} XOF</div>
-            <div class="text-xs {% if active_booster %}text-yellow-500{% else %}text-emerald{% endif %} font-semibold">Generes chaque jour</div>
-        </div>
-        <div class="card card-dark p-4" style="border-radius: 1rem; border: none; background-color: #111827;">
-            <div class="text-sm text-gray-400 mb-2">Investi</div>
-            <div class="text-xl font-bold mb-1">{{ investi_total }} XOF</div>
-            <div class="text-xs text-emerald font-semibold">{{ produits_actifs }} investissements actifs</div>
-        </div>
-    </div>
+            <div class="metric-value {% if active_booster %}text-warning-strong{% else %}text-positive{% endif %}">{{ gains_jour }} XOF</div>
+            <div class="metric-caption">Projection de vos souscriptions actives</div>
+        </article>
 
-    <div class="mb-6">
-        <div class="flex-between mb-2">
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">PROGRESSION PLATEFORME</div>
-        </div>
-        <div class="card card-dark p-4" style="border-radius: 1rem; border: none; background-color: #111827;">
-            <div class="flex-between text-sm mb-3">
-                <span class="text-gray-300">{{ progression_mois }} / {{ progression_max }} Pts</span>
-                <span class="text-gray-300">{{ progression_percent }}% complete</span>
+        <article class="metric-card">
+            <div class="metric-label">
+                <span>Capital investi</span>
+                <i class="ph-duotone ph-chart-pie-slice"></i>
             </div>
-            <div class="progress-track" style="height: 6px; background: #1f2937; border-radius: 10px; overflow: hidden; margin-bottom: 0;">
-                <div class="bg-gradient-cyan" style="width: {{ progression_percent }}%; height: 100%; border-radius: 10px;"></div>
+            <div class="metric-value">{{ investi_total }} XOF</div>
+            <div class="metric-caption">{{ produits_actifs }} categorie{{ produits_actifs|pluralize }} active{{ produits_actifs|pluralize }}</div>
+        </article>
+    </section>
+
+    <section class="card card-dark">
+        <div class="section-heading">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-sparkle"></i>
+                    Progression
+                </div>
+                <h2>Votre dynamique actuelle</h2>
             </div>
-            <p class="text-xs text-gray-500 mt-3" style="line-height: 1.4;">Astuce : Vous gagnez <strong>+20 Points</strong> lorsqu'un ami invite active son premier palier VIP (min. 10 000 XOF).</p>
+            <div class="section-meta">{{ progression_percent }}%</div>
         </div>
-    </div>
+        <div class="progress-shell mt-4">
+            <div class="flex-between text-sm">
+                <span class="text-gray-300">{{ progression_mois }} / {{ progression_max }} points</span>
+                <span class="text-gray-400">Objectif mensuel</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: {{ progression_percent }}%;"></div>
+            </div>
+            <div class="soft-note">
+                Vos points progressent quand votre reseau active une nouvelle souscription. Plus votre activite est reguliere, plus votre profil devient prioritaire pour les offres internes.
+            </div>
+        </div>
+    </section>
 
     {% if produits_populaires %}
-    <div class="mb-6">
-        <div class="flex-between mb-3">
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">PALIERS VIP DISPONIBLES</div>
-            <div class="text-xs text-gray-500">Rendements journaliers</div>
-        </div>
-        <div class="horizontal-scroll" style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem; -ms-overflow-style: none; scrollbar-width: none;">
-            {% for tier in produits_populaires %}
-            <div onclick="window.location.href='{% url 'trade' %}'" class="card card-dark" style="background: linear-gradient(145deg, #0f172a, #020617); border: 1px solid rgba(16, 185, 129, 0.15); padding: 1.25rem; border-radius: 16px; min-width: 220px; flex-shrink: 0; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0,0,0,0.2);" onmouseover="this.style.borderColor='rgba(16, 185, 129, 0.6)'; this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 25px rgba(16, 185, 129, 0.15)'" onmouseout="this.style.borderColor='rgba(16, 185, 129, 0.15)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.2)'">
-                <div class="flex-between mb-2" style="align-items: center;">
-                    <span class="font-bold text-white tracking-wide" style="font-size: 1.1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">{{ tier.name }}</span>
-                    <span style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05)); color: #10b981; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 800; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 10px rgba(16, 185, 129, 0.1) inset;">{{ tier.badge|default:"*" }}</span>
+    <section>
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-graph"></i>
+                    Opportunites
                 </div>
-
-                <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-bottom: 0.8rem;">
-                    <span style="color: #10b981; font-size: 1.25rem; font-weight: 900;">+{{ tier.daily_rate_percentage|floatformat:2 }}%</span>
-                    <span style="color: #64748b; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">/ jour</span>
-                </div>
-
-                <div style="height: 35px; width: 100%; margin-bottom: 1rem; position: relative; overflow: hidden;">
-                    <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 100%; height: 100%;">
-                        <defs>
-                            <linearGradient id="grad-{{ tier.id }}" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="rgba(16, 185, 129, 0.1)" />
-                                <stop offset="100%" stop-color="rgba(16, 185, 129, 0.8)" />
-                            </linearGradient>
-                        </defs>
-                        <path d="M0,30 L10,22 L20,26 L30,15 L40,20 L50,12 L60,18 L70,8 L80,12 L90,4 L100,6" fill="none" stroke="url(#grad-{{ tier.id }})" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                    </svg>
-                    <div style="position: absolute; right: 0; top: 7px; width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 12px #10b981, 0 0 4px #fff inset;"></div>
-                </div>
-
-                <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.02);">
-                    <span style="color: #64748b; font-size: 0.65rem; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; display: block;">Debloque a partir de</span>
-                    <span style="color: #f8fafc; font-size: 1rem; font-weight: bold;">{{ tier.min_amount|floatformat:0 }} <span style="color: #94a3b8; font-size: 0.75rem;">XOF</span></span>
-                </div>
+                <h3>Categories recommandees</h3>
             </div>
+            <div class="section-meta">Mobile-first, achat rapide</div>
+        </div>
+
+        <div class="h-scroll">
+            {% for tier in produits_populaires %}
+            <article class="card h-card investment-card card-tap" onclick="window.location.href='{% url 'trade' %}'">
+                <div class="investment-card-header">
+                    <div>
+                        <div class="investment-title">{{ tier.name }}</div>
+                        <div class="investment-floor">A partir de {{ tier.min_amount|floatformat:0 }} XOF</div>
+                    </div>
+                    <span class="asset-badge">{{ tier.badge|default:"+" }}</span>
+                </div>
+                <div class="investment-rate">+{{ tier.daily_rate_percentage|floatformat:2 }}% / jour</div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width: {% widthratio forloop.counter produits_populaires|length 100 %}%;"></div>
+                </div>
+                <div class="list-head">
+                    <span class="mini-label">Cycle {{ tier.cycle_days }} jours</span>
+                    <span class="status-pill success">Actif</span>
+                </div>
+            </article>
             {% endfor %}
         </div>
-        <style>
-            .horizontal-scroll::-webkit-scrollbar { display: none; }
-        </style>
-    </div>
+    </section>
     {% endif %}
 
-    <div class="mb-10">
-        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">DERNIERES TRANSACTIONS</div>
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-clock-counter-clockwise"></i>
+                    Historique
+                </div>
+                <h3>Dernieres transactions</h3>
+            </div>
+            <div class="section-meta">3 plus recentes</div>
+        </div>
 
-        <div class="card card-dark" style="border-radius: 1rem; border: none; background-color: transparent;">
+        <div class="list-group">
             {% for tx in transactions %}
-            <div class="flex-between list-item" style="padding: 1rem; background-color: #111827; margin-bottom: 0.5rem; border-radius: 0.75rem; border: 1px solid rgba(255,255,255,0.02); {% if not forloop.last %}margin-bottom: 0.75rem;{% endif %}">
-                <div class="flex-row" style="gap: 0.75rem;">
+            <div class="list-item">
+                <div class="flex-row">
                     {% if tx.tx_type == 'PAY_INVEST' %}
-                    <div style="background: rgba(59, 130, 246, 0.15); border-radius: 6px; padding: 4px; display: flex;">
-                        <i class="ph-bold ph-arrow-up-right text-blue-400"></i>
+                    <span class="transaction-icon primary"><i class="ph-bold ph-arrow-up-right"></i></span>
+                    <div>
+                        <div class="list-title">Souscription</div>
+                        <div class="mini-label">Paiement initie</div>
                     </div>
-                    <span class="text-sm font-medium text-gray-200">Achat de palier</span>
                     {% elif tx.tx_type == 'BOOSTER' %}
-                    <div style="background: rgba(249, 115, 22, 0.15); border-radius: 6px; padding: 4px; display: flex;">
-                        <i class="ph-bold ph-rocket-launch text-orange-400"></i>
+                    <span class="transaction-icon warning"><i class="ph-bold ph-rocket-launch"></i></span>
+                    <div>
+                        <div class="list-title">Booster</div>
+                        <div class="mini-label">Acceleration temporaire</div>
                     </div>
-                    <span class="text-sm font-medium text-gray-200">Achat de booster</span>
                     {% elif tx.tx_type == 'WITHDRAWAL' %}
-                    <div style="background: rgba(59, 130, 246, 0.15); border-radius: 6px; padding: 4px; display: flex;">
-                        <i class="ph-bold ph-arrow-down-left text-blue-400"></i>
+                    <span class="transaction-icon primary"><i class="ph-bold ph-arrow-down"></i></span>
+                    <div>
+                        <div class="list-title">Retrait</div>
+                        <div class="mini-label">Versement en verification</div>
                     </div>
-                    <span class="text-sm font-medium text-gray-200">Retrait</span>
                     {% elif tx.tx_type == 'BONUS' %}
-                    <div style="background: transparent; border-radius: 6px; padding: 2px; display: flex;">
-                        <span style="font-size: 1.1rem;">*</span>
+                    <span class="transaction-icon warning"><i class="ph-bold ph-gift"></i></span>
+                    <div>
+                        <div class="list-title">Bonus parrainage</div>
+                        <div class="mini-label">Credit reseau</div>
                     </div>
-                    <span class="text-sm font-medium text-gray-200">Bonus parrainage</span>
                     {% else %}
-                    <div style="background: rgba(59, 130, 246, 0.15); border-radius: 6px; padding: 4px; display: flex;">
-                        <i class="ph-bold ph-trend-up text-blue-400"></i>
+                    <span class="transaction-icon success"><i class="ph-bold ph-trend-up"></i></span>
+                    <div>
+                        <div class="list-title">Rendement</div>
+                        <div class="mini-label">Gain journalier</div>
                     </div>
-                    <span class="text-sm font-medium text-gray-200">Rendement actif</span>
                     {% endif %}
                 </div>
 
-                <span class="text-sm font-bold {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' or tx.tx_type == 'BOOSTER' %}text-red-500{% elif tx.tx_type == 'BONUS' %}text-yellow-500{% else %}text-emerald{% endif %}">
-                    {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' or tx.tx_type == 'BOOSTER' %}-{% else %}+{% endif %}{{ tx.amount|floatformat:0 }} XOF
-                </span>
+                <div class="text-right">
+                    <div class="font-bold {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' or tx.tx_type == 'BOOSTER' %}text-negative{% elif tx.tx_type == 'BONUS' %}text-warning-strong{% else %}text-positive{% endif %}">
+                        {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' or tx.tx_type == 'BOOSTER' %}-{% else %}+{% endif %}{{ tx.amount|floatformat:0 }} XOF
+                    </div>
+                    <div class="mini-label">{{ tx.created_at|date:"d M, H:i" }}</div>
+                </div>
             </div>
             {% empty %}
-            <div class="empty-state text-center" style="padding: 2rem 1rem; background-color: #111827; border-radius: 0.75rem; border: 1px dashed rgba(255,255,255,0.1);">
-                <i class="ph-duotone ph-receipt text-gray-600 mb-2" style="font-size: 2.5rem; display: block;"></i>
-                <p class="text-sm text-gray-400 m-0">Aucune transaction pour le moment.</p>
-                <p class="text-xs text-gray-500 mt-1">Vos achats et retraits s'afficheront ici.</p>
+            <div class="empty-state">
+                <i class="ph-duotone ph-receipt"></i>
+                <p>Aucune transaction pour le moment.</p>
+                <p class="mini-label mt-2">Vos achats, gains et retraits apparaitront ici en temps reel.</p>
             </div>
             {% endfor %}
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}
