@@ -2,38 +2,51 @@
 {% block title %}Notifications - InvestPlatform{% endblock %}
 
 {% block content %}
-<div class="flex-between mb-6 pb-4" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-    <a href="javascript:history.back()" style="color: #9ca3af; text-decoration: none;">
-        <i class="ph ph-arrow-left" style="font-size: 1.5rem;"></i>
-    </a>
-    <h2 class="text-lg font-bold text-white m-0">Notifications</h2>
-    <div style="width: 24px;"></div>
-</div>
+<div class="page-stack">
+    <div class="page-topbar">
+        <a href="javascript:history.back()" class="icon-button" aria-label="Retour">
+            <i class="ph-bold ph-arrow-left"></i>
+        </a>
+        <h1>Notifications</h1>
+        <span></span>
+    </div>
 
-<div class="list-group">
-    {% for notif in notifications %}
-    <div {% if 'Nouveau Produit' in notif.title %}onclick="window.location.href='{% url 'trade' %}'"{% endif %} class="card card-dark" style="{% if 'Nouveau Produit' in notif.title %}cursor: pointer; transition: 0.2s;{% endif %} padding: 1rem; border-radius: 1rem; margin-bottom: 0.75rem; border: 1px solid {% if not notif.is_read %}rgba(59, 130, 246, 0.5){% else %}rgba(255,255,255,0.05){% endif %}; position: relative; overflow: hidden;" {% if 'Nouveau Produit' in notif.title %}onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'"{% endif %}>
-        {% if not notif.is_read %}
-        <div style="position: absolute; top: 0; right: 0; width: 8px; height: 8px; border-radius: 50%; background-color: #3b82f6; margin: 0.5rem;"></div>
-        {% endif %}
-        
-        <div class="flex-row" style="align-items: flex-start; gap: 1rem;">
-            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; justify-content: center; align-items: center; flex-shrink: 0;">
-                <i class="ph-fill {% if 'vestissement' in notif.title %}ph-briefcase{% elif 'etrait' in notif.title %}ph-arrow-down-left{% elif 'Dépôt' in notif.title %}ph-arrow-up-right{% else %}ph-bell-ringing{% endif %}" style="font-size: 1.25rem;"></i>
-            </div>
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
             <div>
-                <h4 class="text-sm font-bold text-white m-0 mb-1" style="padding-right: 10px;">{{ notif.title }}</h4>
-                <p class="text-xs text-gray-400 m-0" style="line-height: 1.4;">{{ notif.message }}</p>
-                <div class="text-xs text-gray-500 mt-2 font-medium">{{ notif.created_at|date:"d M H:i" }}</div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-bell-ringing"></i>
+                    Centre d'alertes
+                </div>
+                <h2>Suivi de votre compte</h2>
             </div>
         </div>
-    </div>
-    {% empty %}
-    <div class="empty-state">
-        <i class="ph-duotone ph-bell-slash text-gray-600"></i>
-        <p class="text-sm text-gray-400 m-0">Aucune notification pour le moment.</p>
-        <p class="text-xs text-gray-500 m-0 mt-2">Vos alertes de gains et de parrainage apparaîtront ici.</p>
-    </div>
-    {% endfor %}
+
+        <div class="list-group">
+            {% for notif in notifications %}
+            <article
+                {% if 'Nouveau Produit' in notif.title %}onclick="window.location.href='{% url 'trade' %}'"{% endif %}
+                class="list-item notification-item {% if not notif.is_read %}unread{% endif %}"
+                {% if 'Nouveau Produit' in notif.title %}style="cursor:pointer;"{% endif %}>
+                <div class="flex-row" style="align-items:flex-start;">
+                    <span class="transaction-icon {% if 'vestissement' in notif.title or 'Souscription' in notif.title %}success{% elif 'etrait' in notif.title or 'retrait' in notif.title %}primary{% elif 'bonus' in notif.title|lower %}warning{% else %}primary{% endif %}">
+                        <i class="ph-fill {% if 'vestissement' in notif.title or 'Souscription' in notif.title %}ph-briefcase{% elif 'etrait' in notif.title or 'retrait' in notif.title %}ph-arrow-down-left{% elif 'bonus' in notif.title|lower %}ph-gift{% else %}ph-bell-ringing{% endif %}"></i>
+                    </span>
+                    <div style="min-width:0; padding-right:1rem;">
+                        <div class="list-title">{{ notif.title }}</div>
+                        <p class="mini-label mt-1" style="line-height:1.45;">{{ notif.message }}</p>
+                        <div class="mini-label mt-2">{{ notif.created_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="empty-state">
+                <i class="ph-duotone ph-bell-slash"></i>
+                <p>Aucune notification pour le moment.</p>
+                <p class="mini-label mt-2">Vos alertes de gains, paiements et parrainage apparaitront ici.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 </div>
 {% endblock %}

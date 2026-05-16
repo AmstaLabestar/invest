@@ -2,94 +2,126 @@
 {% block title %}Mon Profil - InvestPlatform{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 1.5rem; margin-bottom: 2.5rem; width: 100%;">
-    
-    <!-- Avatar Robuste -->
-    <div style="width: 85px; height: 85px; min-height: 85px; min-width: 85px; border-radius: 50%; background: linear-gradient(135deg, #14b8a6, #0d9488); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; box-shadow: 0 10px 25px -5px rgba(20, 184, 166, 0.4); flex-shrink: 0; overflow: hidden;">
-        <span style="font-size: 2rem; font-weight: 800; color: #022c22; letter-spacing: 1px;">
+<div class="page-stack">
+    <section class="profile-hero">
+        <div class="profile-avatar">
             {% if user.first_name %}
                 {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
             {% else %}
                 {{ user.username|slice:":2"|upper }}
             {% endif %}
-        </span>
-    </div>
-    
-    <!-- Nom et ID -->
-    <!-- Force le blanc pour contourner les comportements des navigateurs -->
-    <h2 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 0.25rem; margin-top: 0; letter-spacing: 0.5px;">
-        {% if user.first_name %}
-            {{ user.first_name }} {{ user.last_name|upper }}
-        {% else %}
-            {{ user.username }}
-        {% endif %}
-    </h2>
-    <p style="color: #60a5fa; font-size: 0.875rem; margin-bottom: 1rem; margin-top: 0; font-weight: 500;">
-        ID: INV-2024-{{ user.id|stringformat:"03d" }}
-    </p>
-    
-    <!-- Badge Niveau -->
-    <div style="border: 1px solid #eab308; color: #eab308; background-color: rgba(234, 179, 8, 0.1); border-radius: 999px; padding: 0.35rem 1rem; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0;">
-        <span style="font-size: 1.1rem; line-height: 1;">🎖️</span> 
-        <span style="line-height: 1.2;">Niveau Or • {{ user.points|default:"0" }} pts</span>
-    </div>
-</div>
+        </div>
 
-<div style="padding: 0 0.5rem; margin-bottom: 3rem; width: 100%;">
-    <!-- Liste des options (liens sécurisés contre le visited purple) -->
-    
-    <a href="{% url 'settings_password' %}" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; background-color: #111827; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; margin-bottom: 0.75rem; text-decoration: none;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <i class="ph-fill ph-lock-key" style="font-size: 1.4rem; color: #f59e0b;"></i>
-            <span style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">Mot de passe</span>
+        <div class="profile-name">
+            {% if user.first_name %}
+                {{ user.first_name }} {{ user.last_name|upper }}
+            {% else %}
+                {{ user.username }}
+            {% endif %}
         </div>
-        <span style="color: #6b7280; font-weight: 400;">→</span>
-    </a>
-    
-    <a href="{% url 'settings_theme' %}" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; background-color: #111827; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; margin-bottom: 0.75rem; text-decoration: none;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <i class="ph-fill ph-palette" style="font-size: 1.4rem; color: #ec4899;"></i>
-            <span style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">Couleur & Thème</span>
+        <div class="profile-id">ID: INV-2024-{{ user.id|stringformat:"03d" }}</div>
+
+        <div class="hero-foot" style="justify-content:center;">
+            <span class="status-pill warning">
+                <i class="ph-fill ph-medal"></i>
+                Niveau Or
+            </span>
+            <span class="status-pill success">
+                <i class="ph-fill ph-star"></i>
+                {{ user.points|default:"0" }} pts
+            </span>
         </div>
-        <span style="color: #6b7280; font-weight: 400;">→</span>
-    </a>
-    
-    <a href="{% url 'settings_points' %}" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; background-color: #111827; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; margin-bottom: 0.75rem; text-decoration: none;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <i class="ph-fill ph-star" style="font-size: 1.4rem; color: #eab308;"></i>
-            <span style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">Points de fidélité ({{ user.points|default:"0" }})</span>
+    </section>
+
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-sliders-horizontal"></i>
+                    Compte
+                </div>
+                <h2>Reglages et activite</h2>
+            </div>
         </div>
-        <span style="color: #6b7280; font-weight: 400;">→</span>
-    </a>
-    
-    <a href="{% url 'settings_info' %}" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; background-color: #111827; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; margin-bottom: 0.75rem; text-decoration: none;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <i class="ph-fill ph-identification-card" style="font-size: 1.4rem; color: #60a5fa;"></i>
-            <span style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">Mes informations</span>
+
+        <div class="menu-list">
+            <a href="{% url 'settings_password' %}" class="menu-item">
+                <span class="menu-item-main">
+                    <span class="transaction-icon warning"><i class="ph-fill ph-lock-key"></i></span>
+                    <span class="menu-item-copy">
+                        <span class="menu-item-title">Mot de passe</span>
+                        <span class="menu-item-subtitle">Mettre a jour votre securite</span>
+                    </span>
+                </span>
+                <i class="ph-bold ph-caret-right menu-chevron"></i>
+            </a>
+
+            <a href="{% url 'settings_theme' %}" class="menu-item">
+                <span class="menu-item-main">
+                    <span class="transaction-icon primary"><i class="ph-fill ph-palette"></i></span>
+                    <span class="menu-item-copy">
+                        <span class="menu-item-title">Theme</span>
+                        <span class="menu-item-subtitle">Mode sombre ou clair</span>
+                    </span>
+                </span>
+                <i class="ph-bold ph-caret-right menu-chevron"></i>
+            </a>
+
+            <a href="{% url 'settings_points' %}" class="menu-item">
+                <span class="menu-item-main">
+                    <span class="transaction-icon warning"><i class="ph-fill ph-star"></i></span>
+                    <span class="menu-item-copy">
+                        <span class="menu-item-title">Points de fidelite</span>
+                        <span class="menu-item-subtitle">{{ user.points|default:"0" }} points disponibles</span>
+                    </span>
+                </span>
+                <i class="ph-bold ph-caret-right menu-chevron"></i>
+            </a>
+
+            <a href="{% url 'settings_info' %}" class="menu-item">
+                <span class="menu-item-main">
+                    <span class="transaction-icon primary"><i class="ph-fill ph-identification-card"></i></span>
+                    <span class="menu-item-copy">
+                        <span class="menu-item-title">Mes informations</span>
+                        <span class="menu-item-subtitle">Nom, email et numero de retrait</span>
+                    </span>
+                </span>
+                <i class="ph-bold ph-caret-right menu-chevron"></i>
+            </a>
+
+            <a href="{% url 'settings_history' %}" class="menu-item">
+                <span class="menu-item-main">
+                    <span class="transaction-icon success"><i class="ph-fill ph-clock-counter-clockwise"></i></span>
+                    <span class="menu-item-copy">
+                        <span class="menu-item-title">Historique</span>
+                        <span class="menu-item-subtitle">Transactions, retraits et bonus</span>
+                    </span>
+                </span>
+                <i class="ph-bold ph-caret-right menu-chevron"></i>
+            </a>
+
+            <a href="{% url 'settings_support' %}" class="menu-item">
+                <span class="menu-item-main">
+                    <span class="transaction-icon danger"><i class="ph-fill ph-question"></i></span>
+                    <span class="menu-item-copy">
+                        <span class="menu-item-title">Aide & Support</span>
+                        <span class="menu-item-subtitle">Assistance paiement et retrait</span>
+                    </span>
+                </span>
+                <i class="ph-bold ph-caret-right menu-chevron"></i>
+            </a>
         </div>
-        <span style="color: #6b7280; font-weight: 400;">→</span>
-    </a>
-    
-    <a href="{% url 'settings_history' %}" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; background-color: #111827; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; margin-bottom: 1.5rem; text-decoration: none;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <i class="ph-fill ph-clock-counter-clockwise" style="font-size: 1.4rem; color: #a78bfa;"></i>
-            <span style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">Historique des transactions</span>
-        </div>
-        <span style="color: #6b7280; font-weight: 400;">→</span>
-    </a>
-    
-    <a href="{% url 'settings_support' %}" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; background-color: #111827; border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; margin-bottom: 2rem; text-decoration: none;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <i class="ph-fill ph-question" style="font-size: 1.4rem; color: #f43f5e;"></i>
-            <span style="color: #ffffff; font-weight: 500; font-size: 0.95rem;">Aide & Support</span>
-        </div>
-        <span style="color: #6b7280; font-weight: 400;">→</span>
-    </a>
-    
-    <!-- Bouton Déconnexion avec couleur stricte pour iOS -->
-    <a href="{% url 'logout' %}" style="display: flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; background-color: rgba(225, 29, 72, 0.08); border: 1px solid rgba(225, 29, 72, 0.6); border-radius: 1rem; padding: 1.25rem; color: #ffffff; font-weight: 700; font-size: 0.95rem; gap: 0.5rem; box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.1);">
-        <i class="ph-fill ph-sign-out" style="font-size: 1.4rem;"></i>
-        <span>Déconnexion</span>
+    </section>
+
+    <a href="{% url 'logout' %}" class="menu-item danger-action">
+        <span class="menu-item-main">
+            <span class="transaction-icon danger"><i class="ph-fill ph-sign-out"></i></span>
+            <span class="menu-item-copy">
+                <span class="menu-item-title">Deconnexion</span>
+                <span class="menu-item-subtitle">Fermer la session sur cet appareil</span>
+            </span>
+        </span>
+        <i class="ph-bold ph-caret-right menu-chevron"></i>
     </a>
 </div>
 {% endblock %}
