@@ -12,7 +12,7 @@ from users.models import Notification
 
 from .models import Booster, Investment, InvestmentTier, SystemSettings, Transaction
 from .services import CalculationService, WalletService, YieldRuleService
-from .tasks import calculate_daily_roi
+from .tasks import calculate_binary_bonus, calculate_daily_roi, process_referral_bonuses
 
 
 User = get_user_model()
@@ -210,7 +210,7 @@ class ManagerTransactionFlowTests(TestCase):
             cycle_days=30,
         )
 
-    def test_manager_approval_activates_investment_and_rewards_sponsor(self):
+    def test_manager_approval_activates_investment_and_notifies_sponsor(self):
         investment = Investment.objects.create(
             user=self.client_user,
             tier=self.tier,
@@ -241,17 +241,17 @@ class ManagerTransactionFlowTests(TestCase):
 
         self.assertEqual(tx.status, Transaction.Status.SUCCESS)
         self.assertEqual(investment.status, Investment.Status.ACTIVE)
-        self.assertEqual(self.sponsor.points, 20)
+        self.assertEqual(self.sponsor.points, 0)
         self.assertTrue(
             Notification.objects.filter(
                 user=self.sponsor,
-                title__icontains='Parrainage',
+                title__icontains='parrainage',
             ).exists()
         )
         self.assertTrue(
             Notification.objects.filter(
                 user=self.client_user,
-                title__icontains='Palier',
+                title__icontains='Souscription',
             ).exists()
         )
 
@@ -620,3 +620,157 @@ class YieldRuleTests(TestCase):
             YieldRuleService.calculate_cumulative_gains(investment),
             Decimal("65000.00"),
         )
+
+
+class ReferralModelTests(TestCase):
+    def setUp(self):
+        self.sponsor = User.objects.create_user(
+            username="ref-sponsor",
+            password="TestPass123!",
+            phone_number="+22670000020",
+            balance=Decimal("0"),
+            points=0,
+        )
+        self.referred_user = User.objects.create_user(
+            username="ref-user",
+            password="TestPass123!",
+            phone_number="+22670000021",
+            sponsor=self.sponsor,
+            balance=Decimal("0"),
+        )
+        self.standard_tier = InvestmentTier.objects.create(
+            name="Bronze",
+            level=20,
+            min_amount=Decimal("10000"),
+            max_amount=Decimal("24999"),
+            daily_rate=Decimal("0.1000"),
+            monthly_rate=Decimal("3.0000"),
+            cycle_days=30,
+        )
+        self.partner_tier = InvestmentTier.objects.create(
+            name="Partenaire 1",
+            level=21,
+            min_amount=Decimal("1250000"),
+            max_amount=Decimal("3499999"),
+            daily_rate=Decimal("0.1500"),
+            monthly_rate=Decimal("4.5000"),
+            cycle_days=30,
+        )
+
+    def test_process_referral_bonuses_credits_standard_referral_after_24_hours(self):
+        investment = Investment.objects.create(
+            user=self.referred_user,
+            tier=self.standard_tier,
+            amount_invested=Decimal("10000"),
+            daily_rate_snapshot=Decimal("0.1000"),
+            status=Investment.Status.ACTIVE,
+        )
+        payment_tx = Transaction.objects.create(
+            user=self.referred_user,
+            tx_type=Transaction.TransactionType.PAY_INVEST,
+            amount=Decimal("10000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='REF-STD-PAY-001',
+            related_investment=investment,
+        )
+        Transaction.objects.filter(id=payment_tx.id).update(
+            created_at=timezone.now() - timedelta(hours=25)
+        )
+
+        process_referral_bonuses()
+        self.sponsor.refresh_from_db()
+
+        self.assertEqual(self.sponsor.balance, Decimal("1000.00"))
+        self.assertEqual(self.sponsor.points, 0)
+        self.assertTrue(
+            Transaction.objects.filter(
+                user=self.sponsor,
+                tx_reference=f'REF-BONUS-{payment_tx.id}',
+                amount=Decimal("1000.00"),
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.sponsor,
+                title__icontains='parrainage',
+            ).exists()
+        )
+
+    def test_process_referral_bonuses_uses_partner_rate_for_partner_categories(self):
+        investment = Investment.objects.create(
+            user=self.referred_user,
+            tier=self.partner_tier,
+            amount_invested=Decimal("1250000"),
+            daily_rate_snapshot=Decimal("0.1500"),
+            status=Investment.Status.ACTIVE,
+        )
+        payment_tx = Transaction.objects.create(
+            user=self.referred_user,
+            tx_type=Transaction.TransactionType.PAY_INVEST,
+            amount=Decimal("1250000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='REF-PARTNER-PAY-001',
+            related_investment=investment,
+        )
+        Transaction.objects.filter(id=payment_tx.id).update(
+            created_at=timezone.now() - timedelta(hours=25)
+        )
+
+        process_referral_bonuses()
+        self.sponsor.refresh_from_db()
+
+        self.assertEqual(self.sponsor.balance, Decimal("187500.00"))
+        self.assertTrue(
+            Transaction.objects.filter(
+                user=self.sponsor,
+                tx_reference=f'REF-BONUS-{payment_tx.id}',
+                amount=Decimal("187500.00"),
+            ).exists()
+        )
+
+    def test_process_referral_bonuses_is_idempotent_and_waits_24_hours(self):
+        investment = Investment.objects.create(
+            user=self.referred_user,
+            tier=self.standard_tier,
+            amount_invested=Decimal("10000"),
+            daily_rate_snapshot=Decimal("0.1000"),
+            status=Investment.Status.ACTIVE,
+        )
+        payment_tx = Transaction.objects.create(
+            user=self.referred_user,
+            tx_type=Transaction.TransactionType.PAY_INVEST,
+            amount=Decimal("10000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='REF-IDEMPOTENT-001',
+            related_investment=investment,
+        )
+
+        process_referral_bonuses()
+        self.sponsor.refresh_from_db()
+        self.assertEqual(self.sponsor.balance, Decimal("0"))
+
+        Transaction.objects.filter(id=payment_tx.id).update(
+            created_at=timezone.now() - timedelta(hours=25)
+        )
+        process_referral_bonuses()
+        process_referral_bonuses()
+        self.sponsor.refresh_from_db()
+
+        self.assertEqual(self.sponsor.balance, Decimal("1000.00"))
+        self.assertEqual(
+            Transaction.objects.filter(
+                user=self.sponsor,
+                tx_reference=f'REF-BONUS-{payment_tx.id}',
+            ).count(),
+            1,
+        )
+
+    def test_legacy_binary_bonus_task_is_neutralized(self):
+        self.sponsor.binary_position = 'LEFT'
+        self.sponsor.save(update_fields=['binary_position'])
+
+        result = calculate_binary_bonus()
+
+        self.sponsor.refresh_from_db()
+        self.assertEqual(self.sponsor.balance, Decimal("0"))
+        self.assertIn('desactive', result)

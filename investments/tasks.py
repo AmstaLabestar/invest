@@ -4,7 +4,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import Investment, Transaction
-from .services import YieldRuleService
+from users.models import Notification
+
+from .services import ReferralService, YieldRuleService
 
 
 User = get_user_model()
@@ -59,58 +61,63 @@ def calculate_daily_roi():
     return f"Calculs de ROI termines pour {active_investments.count()} investissements actifs."
 
 
-# --- ALGORITHME DE PARRAINAGE BINAIRE LEGACY ---
-def get_node_volume(user):
-    """Calcule recursivement le volume d'investissement total genere par l'arbre sous cet utilisateur."""
-    if user is None:
-        return 0
-
-    volume = sum(
-        inv.amount_invested
-        for inv in user.investments.filter(status=Investment.Status.ACTIVE)
+@shared_task
+def process_referral_bonuses():
+    """
+    Verse les bonus de parrainage 24h apres la validation d'un achat filleul.
+    La regle applique 10% par defaut et 15% sur les categories partenaires.
+    """
+    reference_time = timezone.now()
+    eligible_transactions = (
+        Transaction.objects.filter(
+            tx_type=Transaction.TransactionType.PAY_INVEST,
+            status=Transaction.Status.SUCCESS,
+            user__sponsor__isnull=False,
+            related_investment__isnull=False,
+        )
+        .select_related('user', 'user__sponsor', 'related_investment', 'related_investment__tier')
+        .order_by('created_at')
     )
+    processed = 0
 
-    for referral in user.referrals.all():
-        volume += get_node_volume(referral)
+    with transaction.atomic():
+        for payment_tx in eligible_transactions:
+            if not ReferralService.is_bonus_due(payment_tx, reference_time=reference_time):
+                continue
 
-    return volume
+            bonus_tx_ref = ReferralService.build_bonus_reference(payment_tx)
+            if Transaction.objects.filter(tx_reference=bonus_tx_ref).exists():
+                continue
+
+            sponsor = payment_tx.user.sponsor
+            bonus_amount = ReferralService.calculate_bonus_amount(payment_tx)
+            sponsor.balance += bonus_amount
+            sponsor.save(update_fields=['balance'])
+            Transaction.objects.create(
+                user=sponsor,
+                tx_type=Transaction.TransactionType.BONUS,
+                amount=bonus_amount,
+                status=Transaction.Status.SUCCESS,
+                provider=f"Referral Bonus for {payment_tx.user.username}",
+                tx_reference=bonus_tx_ref,
+            )
+            Notification.objects.create(
+                user=sponsor,
+                title="Bonus de parrainage credite",
+                message=(
+                    f"Votre bonus de parrainage de {bonus_amount:,.0f} XOF pour "
+                    f"{payment_tx.user.username} a ete credite."
+                ).replace(',', ' '),
+            )
+            processed += 1
+
+    return f"{processed} bonus de parrainage traites."
 
 
 @shared_task
 def calculate_binary_bonus():
     """
-    Tache legacy pour le bonus binaire.
-    Cette logique sera remplacee par le vrai modele de parrainage du cahier.
+    Tache legacy neutralisee.
+    Le parrainage conforme au cahier est gere par `process_referral_bonuses`.
     """
-    binary_bonus_percentage = 10
-    users_with_referrals = User.objects.filter(referrals__isnull=False).distinct()
-
-    with transaction.atomic():
-        for user in users_with_referrals:
-            left_leg_head = user.referrals.filter(binary_position='LEFT').first()
-            right_leg_head = user.referrals.filter(binary_position='RIGHT').first()
-
-            left_volume = get_node_volume(left_leg_head) if left_leg_head else 0
-            right_volume = get_node_volume(right_leg_head) if right_leg_head else 0
-            weak_leg_volume = min(left_volume, right_volume)
-
-            if weak_leg_volume <= 0:
-                continue
-
-            bonus_amount = weak_leg_volume * binary_bonus_percentage / 100
-            bonus_tx_ref = f"BINARY-BONUS-{user.id}-{timezone.localdate().strftime('%Y%m%d')}"
-            if Transaction.objects.filter(tx_reference=bonus_tx_ref).exists():
-                continue
-
-            user.balance += bonus_amount
-            user.save(update_fields=['balance'])
-            Transaction.objects.create(
-                user=user,
-                tx_type=Transaction.TransactionType.BONUS,
-                amount=bonus_amount,
-                status=Transaction.Status.SUCCESS,
-                provider='Binary Bonus',
-                tx_reference=bonus_tx_ref,
-            )
-
-    return "Calculs des bonus binaires termines."
+    return "Bonus binaire desactive au profit du parrainage conforme au cahier."

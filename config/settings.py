@@ -102,9 +102,9 @@ CELERY_BEAT_SCHEDULE = {
         # Exécuter tous les jours à minuit
         'schedule': crontab(hour=0, minute=0),
     },
-    'distribute-binary-bonus-weekly': {
-        'task': 'investments.tasks.calculate_binary_bonus',
+    'process-referral-bonuses-hourly': {
+        'task': 'investments.tasks.process_referral_bonuses',
         # Exécuter tous les dimanches soir à 23h55
-        'schedule': crontab(day_of_week='sun', hour=23, minute=55),
+        'schedule': crontab(minute=0),
     },
 }

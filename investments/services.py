@@ -161,6 +161,44 @@ class YieldRuleService:
         return cls.quantize_amount(cls.PARTNER_FIXED_BONUS * len(checkpoints))
 
 
+class ReferralService:
+    DEFAULT_REFERRAL_RATE = Decimal("0.10")
+    PARTNER_REFERRAL_RATE = Decimal("0.15")
+    BONUS_DELAY_HOURS = 24
+
+    @classmethod
+    def get_referral_rate(cls, investment):
+        if investment and YieldRuleService.is_partner_category(investment.tier):
+            return cls.PARTNER_REFERRAL_RATE
+        return cls.DEFAULT_REFERRAL_RATE
+
+    @classmethod
+    def build_bonus_reference(cls, payment_transaction):
+        return f"REF-BONUS-{payment_transaction.id}"
+
+    @classmethod
+    def is_bonus_due(cls, payment_transaction, reference_time=None):
+        if reference_time is None:
+            reference_time = timezone.now()
+
+        if payment_transaction.tx_type != Transaction.TransactionType.PAY_INVEST:
+            return False
+        if payment_transaction.status != Transaction.Status.SUCCESS:
+            return False
+        if payment_transaction.related_investment is None:
+            return False
+        if payment_transaction.user.sponsor is None:
+            return False
+
+        unlock_at = payment_transaction.created_at + timedelta(hours=cls.BONUS_DELAY_HOURS)
+        return reference_time >= unlock_at
+
+    @classmethod
+    def calculate_bonus_amount(cls, payment_transaction):
+        rate = cls.get_referral_rate(payment_transaction.related_investment)
+        return YieldRuleService.quantize_amount(payment_transaction.amount * rate)
+
+
 class CalculationService:
     @staticmethod
     def calculate_daily_returns(investment):

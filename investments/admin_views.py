@@ -100,23 +100,19 @@ def process_transaction(request, tx_id, action):
             inv.start_date = timezone.now()
             inv.save()
 
-            # Application des points exclusifs au bonus de parrainage
-            is_first_investment = Investment.objects.filter(
-                user=tx.user,
-                status=Investment.Status.ACTIVE,
-            ).count() == 1
-            if is_first_investment and tx.user.sponsor and inv.amount_invested >= 10000:
-                tx.user.sponsor.points += 20
-                tx.user.sponsor.save(update_fields=['points'])
+            if tx.user.sponsor:
                 Notification.objects.create(
                     user=tx.user.sponsor,
-                    title="Bonus de Parrainage Actif !",
-                    message=f"Votre filleul {tx.user.username} a active un palier VIP. Vous gagnez +20 Points VIP !"
+                    title="Bonus de parrainage en attente",
+                    message=(
+                        f"L'achat de {tx.user.username} est valide. "
+                        "Votre bonus de parrainage sera credite sous 24h."
+                    ),
                 )
             Notification.objects.create(
                 user=tx.user,
-                title="Palier Active",
-                message=f"Votre paiement de {tx.amount:,.0f} XOF a ete confirme. Votre palier est actif !".replace(',', ' ')
+                title="Souscription activee",
+                message=f"Votre paiement de {tx.amount:,.0f} XOF a ete confirme. Votre souscription est active !".replace(',', ' ')
             )
 
         # Pour les retraits, le solde a DEJA ete deduit du client lors de sa demande
