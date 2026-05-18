@@ -1,0 +1,26 @@
+databases:
+  - name: invest-demo-db
+    plan: free
+    databaseName: investplatform
+    user: investplatform
+
+services:
+  - type: web
+    name: invest-demo
+    runtime: python
+    plan: free
+    buildCommand: './build.sh'
+    startCommand: 'gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: invest-demo-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: 'False'
+      - key: DATABASE_SSL_REQUIRE
+        value: 'True'
+      - key: WEB_CONCURRENCY
+        value: '2'

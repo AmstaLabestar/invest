@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -7,7 +8,27 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key-investp
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',')
+    if host.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+
+RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+
+for external_host in (RENDER_EXTERNAL_HOSTNAME, RAILWAY_PUBLIC_DOMAIN):
+    if external_host:
+        ALLOWED_HOSTS.append(external_host)
+        CSRF_TRUSTED_ORIGINS.append(f'https://{external_host}')
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -22,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -51,6 +73,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -61,6 +85,13 @@ DATABASES = {
         'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
+
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=os.getenv('DATABASE_SSL_REQUIRE', 'True') == 'True',
+    )
 
 AUTH_PASSWORD_VALIDATORS = [
     { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
@@ -82,6 +113,12 @@ FORMAT_MODULE_PATH = ['config.formats']
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = os.getenv(
+    'DJANGO_STATICFILES_STORAGE',
+    'whitenoise.storage.CompressedStaticFilesStorage'
+    if DEBUG
+    else 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
