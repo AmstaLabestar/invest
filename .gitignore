@@ -12,6 +12,7 @@ env/
 .mypy_cache/
 
 # Django runtime artifacts
+db.sqlite3
 staticfiles/
 media/
 celerybeat-schedule
