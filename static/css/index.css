@@ -1248,6 +1248,51 @@ textarea {
   font-size: 0.92rem;
 }
 
+.service-intro {
+  margin-bottom: 1.15rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(172, 197, 228, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.service-intro-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.28;
+}
+
+.service-intro-copy {
+  margin-top: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.service-points {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.service-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.42;
+}
+
+.service-point i {
+  margin-top: 0.12rem;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
 .auth-footer {
   margin-top: 1.2rem;
   text-align: center;
