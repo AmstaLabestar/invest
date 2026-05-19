@@ -1478,6 +1478,89 @@ body.theme-light .pill-soft {
   color: #063042;
 }
 
+body.theme-light .chart-panel,
+body.theme-light .control-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 249, 253, 0.94));
+  border-color: rgba(74, 98, 129, 0.16);
+  box-shadow: 0 16px 32px rgba(20, 44, 74, 0.08);
+}
+
+body.theme-light .chart-title,
+body.theme-light .detail-block strong,
+body.theme-light .control-panel h3,
+body.theme-light .portfolio-title,
+body.theme-light .list-title {
+  color: #0d2038;
+}
+
+body.theme-light .chart-kicker,
+body.theme-light .field-label,
+body.theme-light .mini-label,
+body.theme-light .section-label,
+body.theme-light .section-meta {
+  color: #607089;
+}
+
+body.theme-light .chart-rate,
+body.theme-light .text-positive {
+  color: #087f64;
+}
+
+body.theme-light .detail-block,
+body.theme-light .asset-btn,
+body.theme-light .field-control,
+body.theme-light .field-prefix,
+body.theme-light .field input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body.theme-light .field select,
+body.theme-light .field textarea {
+  background: #ffffff;
+  border-color: rgba(74, 98, 129, 0.18);
+  color: #0d2038;
+}
+
+body.theme-light .field-control option,
+body.theme-light .field-control optgroup,
+body.theme-light .field select option,
+body.theme-light .field select optgroup {
+  color: #0d2038;
+  background: #ffffff;
+}
+
+body.theme-light .field-prefix span {
+  background: rgba(8, 127, 100, 0.1);
+  color: #087f64;
+}
+
+body.theme-light .field-prefix input {
+  color: #0d2038;
+}
+
+body.theme-light .asset-btn {
+  color: #31445f;
+}
+
+body.theme-light .asset-btn-active {
+  background: linear-gradient(135deg, rgba(8, 127, 100, 0.12), rgba(48, 116, 194, 0.12));
+  color: #0d2038;
+  border-color: rgba(8, 127, 100, 0.32);
+}
+
+body.theme-light .asset-badge {
+  background: rgba(8, 127, 100, 0.12);
+  color: #087f64;
+}
+
+body.theme-light .status-pill.info {
+  background: rgba(48, 116, 194, 0.12);
+  color: #245a9f;
+  border-color: rgba(48, 116, 194, 0.2);
+}
+
+body.theme-light .chart-line-hint {
+  border-top-color: rgba(8, 127, 100, 0.2);
+}
+
 body.theme-light input:-webkit-autofill,
 body.theme-light input:-webkit-autofill:hover,
 body.theme-light input:-webkit-autofill:focus,
