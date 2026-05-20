@@ -22,4 +22,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiez le reste du code de l'application
 COPY . /app/
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_data && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_data && python manage.py create_render_superuser && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
