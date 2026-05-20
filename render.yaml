@@ -22,5 +22,13 @@ services:
         value: 'False'
       - key: DATABASE_SSL_REQUIRE
         value: 'True'
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: 'True'
+      - key: DJANGO_SESSION_COOKIE_SECURE
+        value: 'True'
+      - key: DJANGO_CSRF_COOKIE_SECURE
+        value: 'True'
+      - key: DJANGO_SECURE_HSTS_SECONDS
+        value: '3600'
       - key: WEB_CONCURRENCY
         value: '2'

@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key-investplatform-2026')
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+IS_PRODUCTION = not DEBUG
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -29,6 +30,12 @@ for external_host in (RENDER_EXTERNAL_HOSTNAME, RAILWAY_PUBLIC_DOMAIN):
         CSRF_TRUSTED_ORIGINS.append(f'https://{external_host}')
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.getenv('DJANGO_SECURE_SSL_REDIRECT', 'True' if IS_PRODUCTION else 'False') == 'True'
+SESSION_COOKIE_SECURE = os.getenv('DJANGO_SESSION_COOKIE_SECURE', 'True' if IS_PRODUCTION else 'False') == 'True'
+CSRF_COOKIE_SECURE = os.getenv('DJANGO_CSRF_COOKIE_SECURE', 'True' if IS_PRODUCTION else 'False') == 'True'
+SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '3600' if IS_PRODUCTION else '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False') == 'True'
+SECURE_HSTS_PRELOAD = os.getenv('DJANGO_SECURE_HSTS_PRELOAD', 'False') == 'True'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
