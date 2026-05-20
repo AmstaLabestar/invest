@@ -112,12 +112,3 @@ def process_referral_bonuses():
             processed += 1
 
     return f"{processed} bonus de parrainage traites."
-
-
-@shared_task
-def calculate_binary_bonus():
-    """
-    Tache legacy neutralisee.
-    Le parrainage conforme au cahier est gere par `process_referral_bonuses`.
-    """
-    return "Bonus binaire desactive au profit du parrainage conforme au cahier."

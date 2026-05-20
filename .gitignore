@@ -16,6 +16,7 @@ db.sqlite3
 staticfiles/
 media/
 celerybeat-schedule
+docs/
 
 # Environment files
 .env

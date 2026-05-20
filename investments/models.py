@@ -106,8 +106,7 @@ class Investment(models.Model):
 
 class Transaction(models.Model):
     class TransactionType(models.TextChoices):
-        PAY_INVEST = ('PAY_INVEST', 'Achat de Palier (Checkout)')
-        BOOSTER = ('BOOSTER', 'Achat de Booster')
+        PAY_INVEST = ('PAY_INVEST', 'Achat de categorie')
         WITHDRAWAL = ('WITHDRAWAL', 'Retrait')
         ROI = ('ROI', 'Gains Rendement')
         BONUS = ('BONUS', 'Bonus Parrainage')
@@ -120,7 +119,7 @@ class Transaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
     tx_type = models.CharField(max_length=15, choices=TransactionType.choices)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    provider = models.CharField(max_length=255, blank=True, help_text="CinetPay, Orange Money, Crypto Wallet...")
+    provider = models.CharField(max_length=255, blank=True, help_text="Orange Money, Moov Money, Telecel Money")
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
     tx_reference = models.CharField(max_length=100, unique=True, blank=True, null=True)
     related_investment = models.ForeignKey('Investment', on_delete=models.SET_NULL, null=True, blank=True, related_name='payment_tx')
@@ -132,37 +131,6 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.get_tx_type_display()} - {self.amount} XOF - {self.user}"
-
-
-class Booster(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Nom du Booster (Ex: Speed Boost x1.5)")
-    multiplier = models.DecimalField(max_digits=4, decimal_places=2, verbose_name="Multiplicateur (Ex: 1.5)")
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Prix d'achat (XOF)")
-    duration_days = models.IntegerField(default=1, verbose_name="Duree (Jours)")
-    is_active = models.BooleanField(default=True, verbose_name="Actif")
-    icon = models.CharField(max_length=50, blank=True, null=True, help_text="Ex: ph-rocket")
-
-    class Meta:
-        verbose_name = "Booster"
-        verbose_name_plural = "Boosters"
-
-    def __str__(self):
-        return f"{self.name} (x{self.multiplier})"
-
-
-class UserBooster(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='boosters')
-    booster = models.ForeignKey(Booster, on_delete=models.CASCADE)
-    start_date = models.DateTimeField(auto_now_add=True)
-    end_date = models.DateTimeField()
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        verbose_name = "Booster Utilisateur"
-        verbose_name_plural = "Boosters Utilisateur"
-
-    def __str__(self):
-        return f"{self.user} - {self.booster.name}"
 
 
 class SystemSettings(models.Model):
@@ -178,7 +146,7 @@ class SystemSettings(models.Model):
 
 
 class PaymentConfig(models.Model):
-    provider_name = models.CharField(max_length=50, unique=True, verbose_name="Nom du Fournisseur (ex: CinetPay)")
+    provider_name = models.CharField(max_length=50, unique=True, verbose_name="Nom du fournisseur")
     is_active = models.BooleanField(default=True, verbose_name="Activer ce moyen de paiement")
     api_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="Cle API Publique")
     secret_key = models.CharField(max_length=255, blank=True, null=True, verbose_name="Cle API Secrete / Token")
@@ -187,6 +155,37 @@ class PaymentConfig(models.Model):
 
     def __str__(self):
         return f"Configuration {self.provider_name} ({self.environment})"
+
+
+class SupportTicket(models.Model):
+    class Status(models.TextChoices):
+        OPEN = ('OPEN', 'Ouvert')
+        IN_PROGRESS = ('IN_PROGRESS', 'En traitement')
+        RESOLVED = ('RESOLVED', 'Resolue')
+        CLOSED = ('CLOSED', 'Fermee')
+
+    class Priority(models.TextChoices):
+        LOW = ('LOW', 'Faible')
+        NORMAL = ('NORMAL', 'Normale')
+        HIGH = ('HIGH', 'Haute')
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='support_tickets')
+    subject = models.CharField(max_length=160, verbose_name="Sujet")
+    message = models.TextField(verbose_name="Message")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+    priority = models.CharField(max_length=15, choices=Priority.choices, default=Priority.NORMAL)
+    admin_response = models.TextField(blank=True, verbose_name="Reponse admin")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = "Ticket support"
+        verbose_name_plural = "Tickets support"
+
+    def __str__(self):
+        return f"{self.subject} - {self.user}"
 
 
 class AuditLog(models.Model):

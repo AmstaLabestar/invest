@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Securite - InvestPlatform{% endblock %}
+
+{% block content %}
+<div class="page-stack">
+    <div class="page-topbar">
+        <a href="{% url 'profile' %}" class="icon-button" aria-label="Retour">
+            <i class="ph-bold ph-arrow-left"></i>
+        </a>
+        <h1>Securite</h1>
+        <span></span>
+    </div>
+
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-shield-check"></i>
+                    OTP
+                </div>
+                <h2>Verification par code</h2>
+            </div>
+            <span class="status-pill {% if user.otp_enabled %}success{% else %}warning{% endif %}">
+                {% if user.otp_enabled %}Active{% else %}Inactive{% endif %}
+            </span>
+        </div>
+
+        {% if not user.email %}
+        <div class="soft-note">
+            <i class="ph-duotone ph-envelope"></i>
+            Ajoutez une adresse email avant d'activer l'OTP.
+        </div>
+        {% elif user.otp_enabled %}
+        <form method="POST" class="form-stack">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="disable_otp">
+            <button type="submit" class="btn btn-secondary">
+                Desactiver l'OTP
+            </button>
+        </form>
+        {% elif pending_challenge %}
+        <form method="POST" class="form-stack">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="confirm_otp">
+            <label class="field">
+                <span class="field-label">Code recu par email</span>
+                <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required class="field-control" placeholder="000000">
+            </label>
+            <button type="submit" class="btn btn-primary">
+                Confirmer
+            </button>
+        </form>
+        {% else %}
+        <form method="POST" class="form-stack">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="send_otp">
+            <button type="submit" class="btn btn-primary">
+                Envoyer un code
+            </button>
+        </form>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -8,6 +8,8 @@ from .models import Investment, InvestmentTier, Transaction
 
 
 class WalletService:
+    WITHDRAWAL_INTERVAL = timedelta(days=3)
+
     @staticmethod
     def get_available_balance(user):
         return user.balance or Decimal("0")
@@ -63,7 +65,7 @@ class WalletService:
         )
 
     @staticmethod
-    def get_withdrawal_unlock_at(user):
+    def get_latest_withdrawal_anchor(user):
         latest_investment = (
             Investment.objects.filter(
                 user=user,
@@ -76,16 +78,63 @@ class WalletService:
             .order_by('-start_date')
             .first()
         )
-        if latest_investment is None:
+        return latest_investment.start_date if latest_investment else None
+
+    @classmethod
+    def get_current_withdrawal_cycle_start(cls, user, reference_time=None):
+        if reference_time is None:
+            reference_time = timezone.now()
+
+        anchor = cls.get_latest_withdrawal_anchor(user)
+        if anchor is None:
             return None
-        return latest_investment.start_date + timedelta(days=3)
+
+        first_unlock = anchor + cls.WITHDRAWAL_INTERVAL
+        if reference_time < first_unlock:
+            return None
+
+        elapsed_seconds = (reference_time - anchor).total_seconds()
+        interval_seconds = cls.WITHDRAWAL_INTERVAL.total_seconds()
+        completed_cycles = max(1, int(elapsed_seconds // interval_seconds))
+        return anchor + (cls.WITHDRAWAL_INTERVAL * completed_cycles)
+
+    @classmethod
+    def get_withdrawal_unlock_at(cls, user, reference_time=None):
+        if reference_time is None:
+            reference_time = timezone.now()
+
+        anchor = cls.get_latest_withdrawal_anchor(user)
+        if anchor is None:
+            return None
+
+        first_unlock = anchor + cls.WITHDRAWAL_INTERVAL
+        if reference_time < first_unlock:
+            return first_unlock
+
+        cycle_start = cls.get_current_withdrawal_cycle_start(user, reference_time=reference_time)
+        if cls.has_withdrawal_in_cycle(user, cycle_start):
+            return cycle_start + cls.WITHDRAWAL_INTERVAL
+        return cycle_start
+
+    @staticmethod
+    def has_withdrawal_in_cycle(user, cycle_start):
+        if cycle_start is None:
+            return False
+        cycle_end = cycle_start + WalletService.WITHDRAWAL_INTERVAL
+        return Transaction.objects.filter(
+            user=user,
+            tx_type=Transaction.TransactionType.WITHDRAWAL,
+            status__in=[Transaction.Status.PENDING, Transaction.Status.SUCCESS],
+            created_at__gte=cycle_start,
+            created_at__lt=cycle_end,
+        ).exists()
 
     @classmethod
     def is_withdrawal_unlocked(cls, user, reference_time=None):
         if reference_time is None:
             reference_time = timezone.now()
-        unlock_at = cls.get_withdrawal_unlock_at(user)
-        return unlock_at is None or reference_time >= unlock_at
+        unlock_at = cls.get_withdrawal_unlock_at(user, reference_time=reference_time)
+        return unlock_at is None or unlock_at <= reference_time
 
     @classmethod
     def get_withdrawable_amount(cls, user, reference_time=None):
@@ -220,8 +269,6 @@ class CalculationService:
             'gains': float(total_gains),
             'jours_ecoules': days_passed,
             'taux_journalier': daily_rate * 100.0,
-            'multiplicateur': 1.0,
-            'booster_actif': False,
             'bonus_partenaire_total': float(partner_bonus_total),
         }
 

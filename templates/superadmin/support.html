@@ -1,0 +1,51 @@
+{% extends 'base_superadmin.html' %}
+
+{% block title %}SuperAdmin - Support{% endblock %}
+{% block top_title %}Support client{% endblock %}
+
+{% block content %}
+<div class="card p-0" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); overflow: hidden;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+            <i class="ph-duotone ph-headset mr-2" style="color: var(--sa-primary);"></i> Tickets
+        </h2>
+        <span class="text-xs" style="color: var(--sa-text-muted);">Total : {{ tickets.count }}</span>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+            <thead>
+                <tr style="background: var(--sa-hover); color: var(--sa-text-muted); text-transform: uppercase;">
+                    <th style="padding: 1rem;">Ticket</th>
+                    <th style="padding: 1rem;">Client</th>
+                    <th style="padding: 1rem;">Priorite</th>
+                    <th style="padding: 1rem;">Statut</th>
+                    <th style="padding: 1rem;">Mise a jour</th>
+                    <th style="padding: 1rem; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr style="border-bottom: 1px solid var(--sa-border); color: var(--sa-text);">
+                    <td style="padding: 1rem;">
+                        <strong>#{{ ticket.id }} - {{ ticket.subject }}</strong>
+                        <br><small style="color: var(--sa-text-muted);">{{ ticket.message|truncatechars:90 }}</small>
+                    </td>
+                    <td style="padding: 1rem;">{{ ticket.user.username }}<br><small style="color: var(--sa-text-muted);">{{ ticket.user.phone_number }}</small></td>
+                    <td style="padding: 1rem;">{{ ticket.get_priority_display }}</td>
+                    <td style="padding: 1rem;">{{ ticket.get_status_display }}</td>
+                    <td style="padding: 1rem;">{{ ticket.updated_at|date:"d M Y - H:i" }}</td>
+                    <td style="padding: 1rem; text-align: right;">
+                        <a href="{% url 'admin_support_edit' ticket.id %}" class="btn" style="background: rgba(59,130,246,0.1); color: var(--sa-primary); border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold; border: none; padding: 0.5rem 1rem; text-decoration:none;">Traiter</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="padding: 2rem; text-align: center; color: var(--sa-text-muted);">Aucun ticket support.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

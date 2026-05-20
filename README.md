@@ -1,62 +1,45 @@
-# InvestPlatform - High-Frequency Trading & MLM App
+# InvestPlatform
 
-Une plateforme d'investissement professionnel complète (Backend Django + Frontend Responsive) dotée d'un système de marketing multi-niveaux (MLM) asynchrone et d'un tableau de bord de pointe (SuperAdmin).
+Plateforme web Django permettant aux utilisateurs de creer un compte, souscrire a une categorie d'investissement, suivre leurs gains, demander des retraits et parrainer d'autres utilisateurs.
 
-## 🚀 Fonctionnalités Principales
+## Fonctionnalites
 
-### 1. Modèle d'Affaires : Paliers VIP (Tiers)
-- Achats directs des Paliers d'investissement sans wallet intermédiaire ("Direct Checkout").
-- Calcul des rendements quotidiens automatiques via **Intérêts Composés**.
-- Gamification avancée (Points VIP, Badges de fidélité).
+- Catalogue de categories conforme au cahier des charges.
+- Rendements journaliers automatises par categorie.
+- Bonus partenaire de 50 000 FCFA tous les 15 jours pour Partenaire 1 et Partenaire 2.
+- Parrainage simple avec lien unique, bonus credite apres validation et delai de 24h.
+- Retrait limite aux gains disponibles, avec controle des montants et validation admin.
+- Paiements Mobile Money limites a Orange Money, Moov Money et Telecel Money.
+- Back-office pour utilisateurs, categories, transactions, retraits et statistiques.
+- Interface mobile-first responsive.
 
-### 2. Algorithme Binaire & Parrainage (MLM)
-- Système de parrainage dynamique avec Patte Gauche et Patte Droite.
-- CRON asynchrone calculant le volume de vente de l'arbre et reversant un **Bonus Binaire** sur la patte la plus faible.
+## Stack
 
-### 3. Gestion Bancaire Sécurisée
-- Logique anti "Double-Spend" avec verrouillage de base de données (`select_for_update`).
-- Processus de Retrait à double validation (Manager & Client).
-- Intégration simulée (Mobile Money : Orange, Moov, Wave).
+- Django 5 / Python 3.12
+- PostgreSQL en Docker
+- SQLite possible en environnement cloud sans `DATABASE_URL`
+- Celery / Redis pour les traitements asynchrones
+- HTML, CSS, Alpine.js et Chart.js
 
-### 4. Backoffice Manager & SuperAdmin
-- Analyses graphiques interactives de la trésorerie entrante vs sortante.
-- Interface d'approbation des investissements (`PENDING` vers `ACTIVE`).
-- Console de contrôle pour désactiver des produits en un clic.
+## Installation locale
 
-## 🛠 Stack Technique
-- **Backend framework**: Django 5 / Python 3.12
-- **Tâches Asynchrones**: Celery & Redis
-- **Base de données**: PostgreSQL
-- **Frontend**: HTML5, Vanilla CSS, JS (Chart.js & AlpineJS pour la réactivité)
-- **Containerisation**: Docker & Docker Compose
+```bash
+docker-compose up -d --build
+docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py seed_data
+docker-compose exec web python manage.py createsuperuser
+```
 
-## 📖 Installation Rapide (Environnement de Dév)
+Application locale : `http://localhost:8000/`
 
-1. **Cloner le répertoire**
-   ```bash
-   git clone https://github.com/votre-nom/invest.git
-   cd invest
-   ```
+## Paiements
 
-2. **Démarrer les conteneurs Docker**
-   ```bash
-   docker-compose up -d --build
-   ```
+Le code garde un mode de validation admin tant que les API operateurs ne sont pas connectees. Les fournisseurs actifs sont centralises dans `investments/payments.py` afin de brancher ensuite les adaptateurs Orange Money, Moov Money et Telecel Money sans refonte du parcours transactionnel.
 
-3. **Exécuter les migrations**
-   ```bash
-   docker-compose exec web python manage.py makemigrations
-   docker-compose exec web python manage.py migrate
-   ```
+## Securite
 
-4. **Créer un Super Administrateur**
-   ```bash
-   docker-compose exec web python manage.py createsuperuser
-   ```
-
-L'application est disponible sur : `http://localhost:8000/`
-
-## 🔒 Sécurité
-- Sessions sécurisées & hachage Argon2/PBKDF2.
-- Protections CSRF et XSS intégrées.
-- Validation rigoureuse des transactions avant chaque exécution Celery.
+- Sessions Django securisees.
+- Protection CSRF.
+- Validation serveur des moyens de paiement.
+- Verrouillage transactionnel lors des demandes de retrait.
+- Variables d'environnement pour les secrets, hosts et base de donnees.

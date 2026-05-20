@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Statistiques - InvestPlatform{% endblock %}
+{% block navigation %}{% endblock %}
+
+{% block content %}
+<div class="page-stack">
+    <div class="page-topbar">
+        <a href="{% url 'login' %}" class="icon-button" aria-label="Retour">
+            <i class="ph-bold ph-arrow-left"></i>
+        </a>
+        <h1>Statistiques</h1>
+        <span></span>
+    </div>
+
+    <section class="hero-card">
+        <div class="hero-eyebrow">Communaute</div>
+        <div class="hero-amount">{{ total_members }}</div>
+        <div class="hero-foot">
+            <span class="pill pill-soft">
+                <i class="ph-duotone ph-users-three"></i>
+                Membres actifs
+            </span>
+        </div>
+    </section>
+
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-chart-bar"></i>
+                    Categories
+                </div>
+                <h2>Adherents par categorie</h2>
+            </div>
+        </div>
+
+        <div class="list-group">
+            {% for row in stats %}
+            <article class="list-item">
+                <div class="flex-row">
+                    <span class="transaction-icon primary">{{ row.tier__badge|default:'+' }}</span>
+                    <div>
+                        <div class="list-title">{{ row.tier__name }}</div>
+                        <div class="mini-label">Souscriptions actives</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold">{{ row.member_count }}</div>
+                    <div class="mini-label">membre{{ row.member_count|pluralize }}</div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="empty-state">
+                <i class="ph-duotone ph-chart-bar"></i>
+                <p>Aucune souscription active pour le moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

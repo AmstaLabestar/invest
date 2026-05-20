@@ -56,6 +56,17 @@
                 <i class="ph-bold ph-caret-right menu-chevron"></i>
             </a>
 
+            <a href="{% url 'settings_security' %}" class="menu-item">
+                <span class="menu-item-main">
+                    <span class="transaction-icon success"><i class="ph-fill ph-shield-check"></i></span>
+                    <span class="menu-item-copy">
+                        <span class="menu-item-title">Securite OTP</span>
+                        <span class="menu-item-subtitle">{% if user.otp_enabled %}Verification active{% else %}Verification disponible{% endif %}</span>
+                    </span>
+                </span>
+                <i class="ph-bold ph-caret-right menu-chevron"></i>
+            </a>
+
             <a href="{% url 'settings_theme' %}" class="menu-item">
                 <span class="menu-item-main">
                     <span class="transaction-icon primary"><i class="ph-fill ph-palette"></i></span>

@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.test import override_settings
 from django.test import TestCase
 from django.urls import reverse
+
+from .models import OTPChallenge
 
 
 User = get_user_model()
@@ -57,3 +61,23 @@ class RoleAccessTests(TestCase):
         )
 
         self.assertRedirects(response, '/superadmin/')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_otp_enabled_user_must_confirm_code_after_password(self):
+        self.standard_user.email = "client@example.com"
+        self.standard_user.otp_enabled = True
+        self.standard_user.save(update_fields=['email', 'otp_enabled'])
+
+        response = self.client.post(
+            reverse('login'),
+            {'username': self.standard_user.username, 'password': self.password},
+        )
+
+        self.assertRedirects(response, reverse('otp_verify'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(
+            OTPChallenge.objects.filter(
+                user=self.standard_user,
+                purpose=OTPChallenge.Purpose.LOGIN,
+            ).exists()
+        )

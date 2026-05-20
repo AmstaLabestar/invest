@@ -30,37 +30,68 @@
         <div class="section-heading mb-4">
             <div>
                 <div class="section-label">
-                    <i class="ph-duotone ph-question"></i>
-                    Questions frequentes
+                    <i class="ph-duotone ph-ticket"></i>
+                    Ticket support
                 </div>
-                <h2>Reponses rapides</h2>
+                <h2>Nouvelle demande</h2>
             </div>
         </div>
 
-        <div class="menu-list">
-            <article class="notice-card faq-item">
-                <div class="flex-row">
-                    <span class="transaction-icon primary"><i class="ph-bold ph-hand-withdraw"></i></span>
-                    <h3>Comment retirer mes gains ?</h3>
-                </div>
-                <p class="mini-label">Ouvrez Actions, lancez Retirer, puis indiquez le montant. Les retraits sont controles avant validation.</p>
-            </article>
+        <form method="POST" class="form-stack">
+            {% csrf_token %}
+            <label class="field">
+                <span class="field-label">Sujet</span>
+                {{ form.subject }}
+            </label>
+            <label class="field">
+                <span class="field-label">Priorite</span>
+                {{ form.priority }}
+            </label>
+            <label class="field">
+                <span class="field-label">Message</span>
+                {{ form.message }}
+            </label>
+            <button type="submit" class="btn btn-primary">
+                <i class="ph-bold ph-paper-plane-tilt"></i>
+                Envoyer
+            </button>
+        </form>
+    </section>
 
-            <article class="notice-card faq-item">
-                <div class="flex-row">
-                    <span class="transaction-icon warning"><i class="ph-bold ph-share-network"></i></span>
-                    <h3>Comment fonctionne le parrainage ?</h3>
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-clock-counter-clockwise"></i>
+                    Suivi
                 </div>
-                <p class="mini-label">Partagez votre code d'invitation. Les bonus sont credites apres validation des conditions de paiement.</p>
-            </article>
+                <h2>Mes tickets</h2>
+            </div>
+        </div>
 
-            <article class="notice-card faq-item">
-                <div class="flex-row">
-                    <span class="transaction-icon success"><i class="ph-bold ph-rocket-launch"></i></span>
-                    <h3>A quoi servent les boosters ?</h3>
+        <div class="list-group">
+            {% for ticket in tickets %}
+            <article class="list-item">
+                <div>
+                    <div class="list-title">#{{ ticket.id }} - {{ ticket.subject }}</div>
+                    <div class="mini-label">{{ ticket.created_at|date:"d M Y, H:i" }}</div>
+                    {% if ticket.admin_response %}
+                    <div class="mini-label mt-2">{{ ticket.admin_response }}</div>
+                    {% endif %}
                 </div>
-                <p class="mini-label">Un booster accelere temporairement certains rendements selon sa duree et son multiplicateur.</p>
+                <div class="text-right">
+                    <div class="status-pill {% if ticket.status == 'OPEN' %}warning{% elif ticket.status == 'RESOLVED' or ticket.status == 'CLOSED' %}success{% else %}info{% endif %}">
+                        {{ ticket.get_status_display }}
+                    </div>
+                    <div class="mini-label mt-2">{{ ticket.get_priority_display }}</div>
+                </div>
             </article>
+            {% empty %}
+            <div class="empty-state">
+                <i class="ph-duotone ph-ticket"></i>
+                <p>Aucun ticket pour le moment.</p>
+            </div>
+            {% endfor %}
         </div>
     </section>
 </div>

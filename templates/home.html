@@ -36,11 +36,8 @@
         <article class="metric-card">
             <div class="metric-label">
                 <span>Rendement du jour</span>
-                {% if active_booster %}
-                <span class="status-pill warning">x{{ active_booster.booster.multiplier }}</span>
-                {% endif %}
             </div>
-            <div class="metric-value {% if active_booster %}text-warning-strong{% else %}text-positive{% endif %}">{{ gains_jour }} XOF</div>
+            <div class="metric-value text-positive">{{ gains_jour }} XOF</div>
             <div class="metric-caption">Projection de vos souscriptions actives</div>
         </article>
 
@@ -135,12 +132,6 @@
                         <div class="list-title">Souscription</div>
                         <div class="mini-label">Paiement initie</div>
                     </div>
-                    {% elif tx.tx_type == 'BOOSTER' %}
-                    <span class="transaction-icon warning"><i class="ph-bold ph-rocket-launch"></i></span>
-                    <div>
-                        <div class="list-title">Booster</div>
-                        <div class="mini-label">Acceleration temporaire</div>
-                    </div>
                     {% elif tx.tx_type == 'WITHDRAWAL' %}
                     <span class="transaction-icon primary"><i class="ph-bold ph-arrow-down"></i></span>
                     <div>
@@ -163,8 +154,8 @@
                 </div>
 
                 <div class="text-right">
-                    <div class="font-bold {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' or tx.tx_type == 'BOOSTER' %}text-negative{% elif tx.tx_type == 'BONUS' %}text-warning-strong{% else %}text-positive{% endif %}">
-                        {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' or tx.tx_type == 'BOOSTER' %}-{% else %}+{% endif %}{{ tx.amount|floatformat:0 }} XOF
+                    <div class="font-bold {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' %}text-negative{% elif tx.tx_type == 'BONUS' %}text-warning-strong{% else %}text-positive{% endif %}">
+                        {% if tx.tx_type == 'WITHDRAWAL' or tx.tx_type == 'PAY_INVEST' %}-{% else %}+{% endif %}{{ tx.amount|floatformat:0 }} XOF
                     </div>
                     <div class="mini-label">{{ tx.created_at|date:"d M, H:i" }}</div>
                 </div>

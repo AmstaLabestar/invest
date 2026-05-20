@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Verification - InvestPlatform</title>
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=prod_ui_v1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.min.css">
+</head>
+<body class="auth-page">
+    <main class="auth-shell">
+        <section class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="ph-bold ph-shield-check"></i>
+                </div>
+                <div class="hero-eyebrow">Verification</div>
+                <h1 class="auth-title">Entrez le code recu.</h1>
+                <p class="auth-copy">Le code expire apres quelques minutes.</p>
+            </div>
+
+            <form method="POST" class="form-stack">
+                {% csrf_token %}
+                {% if error %}
+                <div class="alert-box error">{{ error }}</div>
+                {% endif %}
+                <label class="field">
+                    <span class="field-label">Code de securite</span>
+                    <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required class="field-control" placeholder="000000">
+                </label>
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph-bold ph-check"></i>
+                    Valider
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

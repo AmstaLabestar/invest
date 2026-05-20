@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
 from django.db.models import Sum
-from .models import Transaction, Booster, Investment, SystemSettings, PaymentConfig, AuditLog, InvestmentTier
-from .forms import SystemSettingsForm, PaymentConfigForm
+from .forms import AdminSupportTicketForm, PaymentConfigForm, SystemSettingsForm
+from .models import AuditLog, Investment, InvestmentTier, PaymentConfig, SupportTicket, SystemSettings, Transaction
 from django.contrib.auth import get_user_model
 from users.forms import CustomUserCreationForm, CustomUserEditForm
 from users.models import Notification
@@ -31,6 +31,7 @@ def manager_dashboard(request):
     thirty_days_ago = timezone.now() - timedelta(days=30)
 
     pending_txs = Transaction.objects.filter(status=Transaction.Status.PENDING).order_by('-created_at')
+    pending_tickets = SupportTicket.objects.filter(status__in=[SupportTicket.Status.OPEN, SupportTicket.Status.IN_PROGRESS])
 
     total_users = User.objects.count()
     active_users_30d = User.objects.filter(last_login__gte=thirty_days_ago).count()
@@ -54,6 +55,8 @@ def manager_dashboard(request):
     alerts = []
     if pending_withdrawals_count > 0:
         alerts.append({'type': 'warning', 'message': f'{pending_withdrawals_count} retrait(s) en attente de validation.'})
+    if pending_tickets.exists():
+        alerts.append({'type': 'warning', 'message': f'{pending_tickets.count()} ticket(s) support a traiter.'})
     failed_txs_today = Transaction.objects.filter(
         status=Transaction.Status.FAILED,
         created_at__gte=today,
@@ -70,19 +73,17 @@ def manager_dashboard(request):
         'withdrawals_today_amount': withdrawals_today_val,
         'withdrawals_today_count': withdrawals_today.count(),
         'activity_rate': activity_rate,
+        'pending_tickets': pending_tickets.count(),
     }
 
     recent_users = User.objects.all().order_by('-date_joined')[:5]
     tiers = InvestmentTier.objects.all().order_by('level')
-    boosters = Booster.objects.all()
-
     context = {
         'stats': stats,
         'pending_txs': pending_txs,
         'alerts': alerts,
         'recent_users': recent_users,
         'tiers': tiers,
-        'boosters': boosters,
     }
 
     return render(request, 'manager/dashboard.html', context)
@@ -140,8 +141,6 @@ def process_transaction(request, tx_id, action):
 @user_passes_test(is_superadmin, login_url='/login/')
 def superadmin_dashboard(request):
     tiers = InvestmentTier.objects.all().order_by('level')
-    boosters = Booster.objects.all()
-
     # Statistiques Tresorerie
     completed_deposits = Transaction.objects.filter(
         tx_type=Transaction.TransactionType.PAY_INVEST,
@@ -218,7 +217,6 @@ def superadmin_dashboard(request):
 
     return render(request, 'superadmin/dashboard.html', {
         'tiers': tiers,
-        'boosters': boosters,
         'treasury': treasury_stats,
         'audit_logs': audit_logs,
         'chart_data_json': chart_data
@@ -325,10 +323,38 @@ def admin_transactions_view(request):
 
 
 @user_passes_test(is_superadmin, login_url='/login/')
+def admin_support_view(request):
+    tickets = SupportTicket.objects.select_related('user').order_by('-updated_at')
+    return render(request, 'superadmin/support.html', {'tickets': tickets, 'title': 'Support Client'})
+
+
+@user_passes_test(is_superadmin, login_url='/login/')
+def admin_support_edit_view(request, ticket_id):
+    ticket = get_object_or_404(SupportTicket, id=ticket_id)
+    if request.method == 'POST':
+        form = AdminSupportTicketForm(request.POST, instance=ticket)
+        if form.is_valid():
+            updated_ticket = form.save(commit=False)
+            if updated_ticket.status in [SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED] and not updated_ticket.resolved_at:
+                updated_ticket.resolved_at = timezone.now()
+            updated_ticket.save()
+            Notification.objects.create(
+                user=ticket.user,
+                title="Support mis a jour",
+                message=f"Votre ticket #{ticket.id} a ete mis a jour.",
+            )
+            AuditLog.objects.create(admin_user=request.user, action=f"A traite le ticket support #{ticket.id}", severity='INFO')
+            messages.success(request, "Ticket mis a jour.")
+            return redirect('admin_support')
+    else:
+        form = AdminSupportTicketForm(instance=ticket)
+    return render(request, 'superadmin/support_form.html', {'ticket': ticket, 'form': form, 'title': f'Ticket #{ticket.id}'})
+
+
+@user_passes_test(is_superadmin, login_url='/login/')
 def admin_products_view(request):
     tiers = InvestmentTier.objects.all().order_by('level')
-    boosters = Booster.objects.all()
-    return render(request, 'superadmin/products.html', {'tiers': tiers, 'boosters': boosters, 'title': 'Paliers & Boosters'})
+    return render(request, 'superadmin/products.html', {'tiers': tiers, 'title': 'Categories'})
 
 
 @user_passes_test(is_superadmin, login_url='/login/')
@@ -336,5 +362,5 @@ def admin_product_toggle(request, prod_id):
     p = get_object_or_404(InvestmentTier, id=prod_id)
     p.is_active = not p.is_active
     p.save()
-    AuditLog.objects.create(admin_user=request.user, action=f"A {'active' if p.is_active else 'desactive'} le palier {p.name}", severity='WARNING')
+    AuditLog.objects.create(admin_user=request.user, action=f"A {'active' if p.is_active else 'desactive'} la categorie {p.name}", severity='WARNING')
     return redirect('admin_products')

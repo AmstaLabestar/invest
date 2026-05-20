@@ -1,50 +1,75 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
+
 
 User = get_user_model()
 
+
 class CustomUserCreationForm(UserCreationForm):
-    first_name = forms.CharField(label="Prénom", max_length=150, required=True)
+    first_name = forms.CharField(label="Prenom", max_length=150, required=True)
     last_name = forms.CharField(label="Nom", max_length=150, required=True)
-    phone_number = forms.CharField(label="Numéro de téléphone", max_length=15, required=True)
-    sponsor_code = forms.CharField(label="Code parrain (Optionnel)", max_length=150, required=False)
+    email = forms.EmailField(label="Email", required=True)
+    phone_number = forms.CharField(label="Numero de telephone", max_length=15, required=True)
+    sponsor_code = forms.CharField(label="Code parrain", max_length=150, required=False)
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('first_name', 'last_name', 'username', 'phone_number')
+        fields = ('first_name', 'last_name', 'username', 'email', 'phone_number')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Cette adresse email est deja utilisee.")
+        return email
 
     def clean_phone_number(self):
-        phone = self.cleaned_data.get('phone_number', '')
-        phone = phone.replace(' ', '')
-        
-        # Automatisation de l'indicatif +226 si manquant
+        phone = self.cleaned_data.get('phone_number', '').replace(' ', '')
         if not phone.startswith('+'):
-            if phone.startswith('226'):
-                phone = '+' + phone
-            else:
-                # Ajout automatique du préfixe
-                phone = '+226' + phone
+            phone = f"+{phone}" if phone.startswith('226') else f"+226{phone}"
         return phone
+
+    def clean_sponsor_code(self):
+        sponsor_code = self.cleaned_data.get('sponsor_code', '').strip()
+        if not sponsor_code:
+            return ''
+
+        normalized_code = sponsor_code
+        if sponsor_code.upper().startswith('INV-'):
+            normalized_code = sponsor_code.split('-')[-1]
+
+        sponsor_exists = User.objects.filter(username__iexact=normalized_code).exists()
+        if not sponsor_exists and normalized_code.isdigit():
+            sponsor_exists = User.objects.filter(id=normalized_code).exists()
+
+        if not sponsor_exists:
+            raise forms.ValidationError("Code parrain invalide.")
+        return sponsor_code
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.first_name = self.cleaned_data.get('first_name')
         user.last_name = self.cleaned_data.get('last_name')
+        user.email = self.cleaned_data.get('email')
         user.phone_number = self.cleaned_data.get('phone_number')
-        
-        # Logique de parrainage
+
         sponsor_code = self.cleaned_data.get('sponsor_code')
         if sponsor_code:
-            try:
-                sponsor = User.objects.get(username=sponsor_code)
-                user.sponsor = sponsor
-            except User.DoesNotExist:
-                pass # Si le parrain n'existe pas, on ignore silencieusement pour ne pas bloquer l'inscription
-                
+            normalized_code = sponsor_code
+            if sponsor_code.upper().startswith('INV-'):
+                normalized_code = sponsor_code.split('-')[-1]
+
+            sponsor = None
+            if normalized_code.isdigit():
+                sponsor = User.objects.filter(id=normalized_code).first()
+            if sponsor is None:
+                sponsor = User.objects.filter(username__iexact=normalized_code).first()
+            user.sponsor = sponsor
+
         if commit:
             user.save()
         return user
+
 
 class CustomUserEditForm(forms.ModelForm):
     class Meta:

@@ -5,9 +5,10 @@ from . import admin_views
 urlpatterns = [
     # Routes Utilisateur standard
     path('', views.home, name='home'),
+    path('stats/', views.public_stats, name='public_stats'),
     path('trade/', views.trade, name='trade'),
     path('api/simulate/', views.simulate_investment_api, name='simulate_investment_api'),
-    path('booster/', views.booster, name='booster'),
+    path('actions/', views.actions, name='actions'),
     path('withdraw/', views.withdraw_request, name='withdraw_request'),
     path('profile/', views.profile, name='profile'),
     
@@ -38,6 +39,8 @@ urlpatterns = [
     path('superadmin/users/<int:user_id>/delete/', admin_views.admin_user_delete_view, name='admin_user_delete'),
     path('superadmin/users/<int:user_id>/toggle/', admin_views.admin_user_toggle, name='admin_user_toggle'),
     path('superadmin/transactions/', admin_views.admin_transactions_view, name='admin_transactions'),
+    path('superadmin/support/', admin_views.admin_support_view, name='admin_support'),
+    path('superadmin/support/<int:ticket_id>/', admin_views.admin_support_edit_view, name='admin_support_edit'),
     path('superadmin/products/', admin_views.admin_products_view, name='admin_products'),
     path('superadmin/products/<int:prod_id>/toggle/', admin_views.admin_product_toggle, name='admin_product_toggle'),
 ]

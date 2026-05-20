@@ -10,47 +10,19 @@ from django.utils import timezone
 
 from users.models import Notification
 
-from .models import Booster, Investment, InvestmentTier, SystemSettings, Transaction, UserBooster
+from .models import Investment, InvestmentTier, SupportTicket, SystemSettings, Transaction
 from .services import CalculationService, WalletService, YieldRuleService
-from .tasks import calculate_binary_bonus, calculate_daily_roi, process_referral_bonuses
+from .tasks import calculate_daily_roi, process_referral_bonuses
 
 
 User = get_user_model()
 
 
 class TransactionTypeTests(TestCase):
-    def setUp(self):
-        self.password = "TestPass123!"
-        self.user = User.objects.create_user(
-            username="client",
-            password=self.password,
-            phone_number="+22670000010",
-            balance=10000,
-        )
-        self.booster = Booster.objects.create(
-            name="Booster Bronze",
-            multiplier="1.50",
-            price="2000",
-            duration_days=7,
-            is_active=True,
-        )
-
-    def test_booster_purchase_creates_booster_transaction_type(self):
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse('booster'),
-            {'booster_id': self.booster.id},
-        )
-
-        self.assertRedirects(response, reverse('booster'))
-        tx = Transaction.objects.get(user=self.user, tx_reference__startswith='BOOST-')
-        self.assertEqual(tx.tx_type, Transaction.TransactionType.BOOSTER)
-
     def test_supported_transaction_types_are_canonical(self):
         self.assertEqual(
             set(Transaction.TransactionType.values),
-            {'PAY_INVEST', 'BOOSTER', 'WITHDRAWAL', 'ROI', 'BONUS'},
+            {'PAY_INVEST', 'WITHDRAWAL', 'ROI', 'BONUS'},
         )
 
 
@@ -99,13 +71,13 @@ class WithdrawalRequestTests(TestCase):
             reverse('withdraw_request'),
             {
                 'amount': '6000',
-                'provider': 'Orange Money',
+                'provider': 'ORANGE_MONEY',
                 'phone': '+22670000011',
             },
-            HTTP_REFERER=reverse('booster'),
+            HTTP_REFERER=reverse('actions'),
         )
 
-        self.assertRedirects(response, reverse('booster'))
+        self.assertRedirects(response, reverse('actions'))
 
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, Decimal("4000"))
@@ -129,13 +101,13 @@ class WithdrawalRequestTests(TestCase):
             reverse('withdraw_request'),
             {
                 'amount': '5000',
-                'provider': 'Orange Money',
+                'provider': 'ORANGE_MONEY',
                 'phone': '+22670000011',
             },
-            HTTP_REFERER=reverse('booster'),
+            HTTP_REFERER=reverse('actions'),
         )
 
-        self.assertRedirects(response, reverse('booster'))
+        self.assertRedirects(response, reverse('actions'))
 
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, Decimal("10000"))
@@ -162,13 +134,13 @@ class WithdrawalRequestTests(TestCase):
             reverse('withdraw_request'),
             {
                 'amount': '5000',
-                'provider': 'Orange Money',
+                'provider': 'ORANGE_MONEY',
                 'phone': '+22670000011',
             },
-            HTTP_REFERER=reverse('booster'),
+            HTTP_REFERER=reverse('actions'),
         )
 
-        self.assertRedirects(response, reverse('booster'))
+        self.assertRedirects(response, reverse('actions'))
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, Decimal("10000"))
         self.assertFalse(
@@ -373,7 +345,7 @@ class WalletServiceTests(TestCase):
         self.assertEqual(WalletService.get_reserved_balance(self.user), Decimal("2000"))
         self.assertEqual(WalletService.get_total_balance(self.user), Decimal("10000"))
         self.assertEqual(WalletService.get_withdrawable_amount(self.user), Decimal("0"))
-        self.assertTrue(WalletService.is_withdrawal_unlocked(self.user))
+        self.assertFalse(WalletService.is_withdrawal_unlocked(self.user))
 
     def test_wallet_service_aggregates_invested_capital_and_realized_gains(self):
         self.assertEqual(WalletService.get_total_invested_capital(self.user), Decimal("12000"))
@@ -446,6 +418,45 @@ class WalletServiceTests(TestCase):
         self.assertFalse(WalletService.is_withdrawal_unlocked(locked_user))
         self.assertEqual(WalletService.get_withdrawable_amount(locked_user), Decimal("0"))
 
+    def test_wallet_service_allows_one_withdrawal_per_three_day_cycle(self):
+        cycle_user = User.objects.create_user(
+            username="wallet-cycle",
+            password="TestPass123!",
+            phone_number="+22670000022",
+            balance=Decimal("9000"),
+        )
+        cycle_investment = Investment.objects.create(
+            user=cycle_user,
+            tier=self.tier,
+            amount_invested=Decimal("12000"),
+            daily_rate_snapshot=Decimal("0.0150"),
+            status=Investment.Status.ACTIVE,
+            end_date=timezone.now() + timedelta(days=45),
+        )
+        Investment.objects.filter(id=cycle_investment.id).update(
+            start_date=timezone.now() - timedelta(days=4)
+        )
+        Transaction.objects.create(
+            user=cycle_user,
+            tx_type=Transaction.TransactionType.ROI,
+            amount=Decimal("9000"),
+            status=Transaction.Status.SUCCESS,
+            tx_reference='WALLET-CYCLE-ROI-001',
+        )
+
+        self.assertTrue(WalletService.is_withdrawal_unlocked(cycle_user))
+
+        Transaction.objects.create(
+            user=cycle_user,
+            tx_type=Transaction.TransactionType.WITHDRAWAL,
+            amount=Decimal("5000"),
+            status=Transaction.Status.PENDING,
+            tx_reference='WALLET-CYCLE-WITHDRAW-001',
+        )
+
+        self.assertFalse(WalletService.is_withdrawal_unlocked(cycle_user))
+        self.assertEqual(WalletService.get_withdrawable_amount(cycle_user), Decimal("0"))
+
 
 class CategoryCatalogTests(TestCase):
     def setUp(self):
@@ -458,9 +469,9 @@ class CategoryCatalogTests(TestCase):
             ('Argent', Decimal('25000'), Decimal('49999')),
             ('Or', Decimal('50000'), Decimal('74999')),
             ('Diamant', Decimal('75000'), Decimal('149999')),
-            ('VIP', Decimal('150000'), Decimal('1249999')),
-            ('Partenaire 1', Decimal('1250000'), Decimal('3499999')),
-            ('Partenaire 2', Decimal('3500000'), None),
+            ('VIP', Decimal('150000'), Decimal('249999')),
+            ('Partenaire 1', Decimal('250000'), Decimal('349999')),
+            ('Partenaire 2', Decimal('350000'), None),
         ]
 
         tiers = list(
@@ -483,8 +494,8 @@ class CategoryCatalogTests(TestCase):
             Decimal('50000'): 'Or',
             Decimal('75000'): 'Diamant',
             Decimal('150000'): 'VIP',
-            Decimal('1250000'): 'Partenaire 1',
-            Decimal('3500000'): 'Partenaire 2',
+            Decimal('250000'): 'Partenaire 1',
+            Decimal('350000'): 'Partenaire 2',
         }
 
         for amount, expected_name in expected_mapping.items():
@@ -508,8 +519,8 @@ class YieldRuleTests(TestCase):
         self.partner_tier = InvestmentTier.objects.create(
             name="Partenaire 1",
             level=7,
-            min_amount=Decimal("1250000"),
-            max_amount=Decimal("3499999"),
+            min_amount=Decimal("250000"),
+            max_amount=Decimal("349999"),
             daily_rate=Decimal("0.1500"),
             monthly_rate=Decimal("4.5000"),
             cycle_days=30,
@@ -524,12 +535,12 @@ class YieldRuleTests(TestCase):
         self.assertEqual(result['bonus_partenaire_total'], 0.0)
 
     def test_simulation_includes_fixed_partner_bonus(self):
-        result = CalculationService.simulate_investment(Decimal("1250000"), self.partner_tier.id)
+        result = CalculationService.simulate_investment(Decimal("250000"), self.partner_tier.id)
 
         self.assertEqual(result['taux_journalier_pourcent'], 15.0)
         self.assertEqual(result['bonus_partenaire_total'], 100000.0)
-        self.assertEqual(result['gain_net'], 5725000.0)
-        self.assertEqual(result['gain_total'], 6975000.0)
+        self.assertEqual(result['gain_net'], 1225000.0)
+        self.assertEqual(result['gain_total'], 1475000.0)
 
     def test_daily_roi_task_is_idempotent_and_pays_partner_bonus_by_checkpoint(self):
         user = User.objects.create_user(
@@ -541,7 +552,7 @@ class YieldRuleTests(TestCase):
         investment = Investment.objects.create(
             user=user,
             tier=self.partner_tier,
-            amount_invested=Decimal("1250000"),
+            amount_invested=Decimal("250000"),
             daily_rate_snapshot=Decimal("0.1500"),
             status=Investment.Status.ACTIVE,
             end_date=timezone.now() + timedelta(days=30),
@@ -554,7 +565,7 @@ class YieldRuleTests(TestCase):
         calculate_daily_roi()
         user.refresh_from_db()
 
-        self.assertEqual(user.balance, Decimal("237500.00"))
+        self.assertEqual(user.balance, Decimal("87500.00"))
         self.assertEqual(
             Transaction.objects.filter(
                 user=user,
@@ -574,7 +585,7 @@ class YieldRuleTests(TestCase):
         calculate_daily_roi()
         user.refresh_from_db()
 
-        self.assertEqual(user.balance, Decimal("237500.00"))
+        self.assertEqual(user.balance, Decimal("87500.00"))
         self.assertEqual(
             Transaction.objects.filter(
                 user=user,
@@ -650,8 +661,8 @@ class ReferralModelTests(TestCase):
         self.partner_tier = InvestmentTier.objects.create(
             name="Partenaire 1",
             level=21,
-            min_amount=Decimal("1250000"),
-            max_amount=Decimal("3499999"),
+            min_amount=Decimal("250000"),
+            max_amount=Decimal("349999"),
             daily_rate=Decimal("0.1500"),
             monthly_rate=Decimal("4.5000"),
             cycle_days=30,
@@ -700,14 +711,14 @@ class ReferralModelTests(TestCase):
         investment = Investment.objects.create(
             user=self.referred_user,
             tier=self.partner_tier,
-            amount_invested=Decimal("1250000"),
+            amount_invested=Decimal("250000"),
             daily_rate_snapshot=Decimal("0.1500"),
             status=Investment.Status.ACTIVE,
         )
         payment_tx = Transaction.objects.create(
             user=self.referred_user,
             tx_type=Transaction.TransactionType.PAY_INVEST,
-            amount=Decimal("1250000"),
+            amount=Decimal("250000"),
             status=Transaction.Status.SUCCESS,
             tx_reference='REF-PARTNER-PAY-001',
             related_investment=investment,
@@ -719,12 +730,12 @@ class ReferralModelTests(TestCase):
         process_referral_bonuses()
         self.sponsor.refresh_from_db()
 
-        self.assertEqual(self.sponsor.balance, Decimal("187500.00"))
+        self.assertEqual(self.sponsor.balance, Decimal("37500.00"))
         self.assertTrue(
             Transaction.objects.filter(
                 user=self.sponsor,
                 tx_reference=f'REF-BONUS-{payment_tx.id}',
-                amount=Decimal("187500.00"),
+                amount=Decimal("37500.00"),
             ).exists()
         )
 
@@ -765,17 +776,6 @@ class ReferralModelTests(TestCase):
             1,
         )
 
-    def test_legacy_binary_bonus_task_is_neutralized(self):
-        self.sponsor.binary_position = 'LEFT'
-        self.sponsor.save(update_fields=['binary_position'])
-
-        result = calculate_binary_bonus()
-
-        self.sponsor.refresh_from_db()
-        self.assertEqual(self.sponsor.balance, Decimal("0"))
-        self.assertIn('desactive', result)
-
-
 class ClientJourneySmokeTests(TestCase):
     def setUp(self):
         self.password = "ClientPass123!"
@@ -798,13 +798,6 @@ class ClientJourneySmokeTests(TestCase):
             monthly_rate=Decimal("3.0000"),
             cycle_days=30,
             badge="B",
-            is_active=True,
-        )
-        self.booster = Booster.objects.create(
-            name="Boost Start",
-            multiplier=Decimal("1.50"),
-            price=Decimal("2000"),
-            duration_days=7,
             is_active=True,
         )
         self.investment = Investment.objects.create(
@@ -841,7 +834,7 @@ class ClientJourneySmokeTests(TestCase):
         )
 
     def test_public_auth_pages_render(self):
-        for route_name in ("login", "register"):
+        for route_name in ("login", "register", "public_stats"):
             with self.subTest(route=route_name):
                 response = self.client.get(reverse(route_name))
                 self.assertEqual(response.status_code, 200)
@@ -853,6 +846,7 @@ class ClientJourneySmokeTests(TestCase):
                 "first_name": "Fatou",
                 "last_name": "Ouedraogo",
                 "username": "new-mobile-client",
+                "email": "new-mobile-client@example.com",
                 "phone_number": "70000031",
                 "password1": "NewClientPass123!",
                 "password2": "NewClientPass123!",
@@ -867,12 +861,13 @@ class ClientJourneySmokeTests(TestCase):
         route_names = [
             "home",
             "trade",
-            "booster",
+            "actions",
             "profile",
             "notifications",
             "settings_history",
             "settings_info",
             "settings_password",
+            "settings_security",
             "settings_points",
             "settings_support",
             "settings_theme",
@@ -891,7 +886,7 @@ class ClientJourneySmokeTests(TestCase):
             {
                 "tier_id": self.tier.id,
                 "amount": "10000",
-                "provider": "Orange Money",
+                "provider": "ORANGE_MONEY",
                 "phone": "70000030",
             },
         )
@@ -902,18 +897,28 @@ class ClientJourneySmokeTests(TestCase):
         self.assertEqual(tx.status, Transaction.Status.PENDING)
         self.assertEqual(tx.related_investment.status, Investment.Status.PENDING)
 
-    def test_booster_purchase_keeps_client_flow_renderable(self):
+    def test_referral_and_withdrawal_page_renders(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("actions"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Lien d'invitation")
+
+    def test_support_ticket_flow_creates_real_ticket(self):
         self.client.force_login(self.user)
 
         response = self.client.post(
-            reverse("booster"),
-            {"booster_id": self.booster.id},
+            reverse("settings_support"),
+            {
+                "subject": "Retrait",
+                "priority": "NORMAL",
+                "message": "Je souhaite suivre ma demande de retrait.",
+            },
         )
 
-        self.assertRedirects(response, reverse("booster"))
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.balance, Decimal("28000"))
-        self.assertTrue(UserBooster.objects.filter(user=self.user, booster=self.booster).exists())
+        self.assertRedirects(response, reverse("settings_support"))
+        self.assertTrue(SupportTicket.objects.filter(user=self.user, subject="Retrait").exists())
 
-        follow_up = self.client.get(reverse("booster"))
-        self.assertEqual(follow_up.status_code, 200)
+    def test_public_stats_exposes_members_by_category(self):
+        response = self.client.get(reverse("public_stats"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Adherents par categorie")

@@ -1,5 +1,5 @@
 from django import forms
-from .models import SystemSettings, PaymentConfig
+from .models import PaymentConfig, SupportTicket, SystemSettings
 
 class SystemSettingsForm(forms.ModelForm):
     class Meta:
@@ -25,4 +25,33 @@ class PaymentConfigForm(forms.ModelForm):
             'secret_key': forms.PasswordInput(attrs={'class': 'form-input', 'render_value': True}),
             'environment': forms.Select(attrs={'class': 'form-input bg-gray-800 text-white'}),
             'webhook_url': forms.URLInput(attrs={'class': 'form-input'}),
+        }
+
+
+class SupportTicketForm(forms.ModelForm):
+    class Meta:
+        model = SupportTicket
+        fields = ('subject', 'message', 'priority')
+        widgets = {
+            'subject': forms.TextInput(attrs={
+                'class': 'field-control',
+                'placeholder': 'Objet de votre demande',
+            }),
+            'message': forms.Textarea(attrs={
+                'class': 'field-control',
+                'rows': 4,
+                'placeholder': 'Expliquez votre besoin',
+            }),
+            'priority': forms.Select(attrs={'class': 'field-control'}),
+        }
+
+
+class AdminSupportTicketForm(forms.ModelForm):
+    class Meta:
+        model = SupportTicket
+        fields = ('status', 'priority', 'admin_response')
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-input'}),
+            'priority': forms.Select(attrs={'class': 'form-input'}),
+            'admin_response': forms.Textarea(attrs={'class': 'form-input', 'rows': 5}),
         }

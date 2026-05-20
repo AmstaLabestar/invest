@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block title %}Retrait & Parrainage - InvestPlatform{% endblock %}
+
+{% block content %}
+<div class="page-stack">
+    <section class="quick-grid">
+        <article class="quick-action trade card-tap" onclick="window.location.href='{% url 'trade' %}'">
+            <span class="quick-action-icon"><i class="ph-bold ph-chart-line-up"></i></span>
+            <h4>Investir</h4>
+            <p>Ajouter une nouvelle souscription.</p>
+        </article>
+
+        <article class="quick-action withdraw card-tap" onclick="openWithdrawModal()">
+            <span class="quick-action-icon"><i class="ph-bold ph-bank"></i></span>
+            <h4>Retirer</h4>
+            <p>Demander un retrait de gains.</p>
+        </article>
+    </section>
+
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-hand-withdraw"></i>
+                    Retrait
+                </div>
+                <h3>Gains disponibles</h3>
+            </div>
+        </div>
+
+        <div class="metric-grid">
+            <article class="metric-card">
+                <div class="metric-label">
+                    <span>Montant retirable</span>
+                    <i class="ph-duotone ph-wallet"></i>
+                </div>
+                <div class="metric-value">{{ withdrawable_amount }} XOF</div>
+                <div class="metric-caption">Gains valides hors capital investi</div>
+            </article>
+
+            <article class="metric-card">
+                <div class="metric-label">
+                    <span>En traitement</span>
+                    <i class="ph-duotone ph-lock"></i>
+                </div>
+                <div class="metric-value">{{ pending_withdrawals|default:"0" }} XOF</div>
+                <div class="metric-caption">Demandes en attente de validation</div>
+            </article>
+        </div>
+
+        {% if withdraw_unlock_at %}
+        <div class="soft-note mt-4">
+            <i class="ph-duotone ph-hourglass-medium"></i>
+            Prochain retrait possible a partir du {{ withdraw_unlock_at|date:"d/m/Y H:i" }}.
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="card card-dark">
+        <div class="section-heading mb-4">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-share-network"></i>
+                    Parrainage
+                </div>
+                <h3>Votre reseau</h3>
+            </div>
+        </div>
+
+        <div class="link-card">
+            <div style="min-width: 0;">
+                <div class="field-label">Lien d'invitation</div>
+                <div class="link-code">{{ referral_link }}</div>
+            </div>
+            <button
+                type="button"
+                class="btn btn-secondary"
+                style="width: auto; min-width: 110px;"
+                onclick="navigator.clipboard.writeText('{{ referral_link }}'); Swal.fire({toast:true, position:'top', icon:'success', title:'Lien copie', showConfirmButton:false, timer:1800, background:'#0d182b', color:'#eef6ff'});">
+                <i class="ph-bold ph-copy"></i>
+                Copier
+            </button>
+        </div>
+
+        <div class="metric-grid mt-4">
+            <article class="metric-card">
+                <div class="metric-label">
+                    <span>Filleuls</span>
+                    <i class="ph-duotone ph-users-three"></i>
+                </div>
+                <div class="metric-value">{{ referral_count }}</div>
+                <div class="metric-caption">Comptes inscrits avec votre lien</div>
+            </article>
+
+            <article class="metric-card">
+                <div class="metric-label">
+                    <span>Gains reseau</span>
+                    <i class="ph-duotone ph-gift"></i>
+                </div>
+                <div class="metric-value">{{ referral_bonus_total }} XOF</div>
+                <div class="metric-caption">Bonus valides</div>
+            </article>
+        </div>
+    </section>
+</div>
+
+<form id="withdrawForm" method="POST" action="{% url 'withdraw_request' %}">
+    {% csrf_token %}
+    <input type="hidden" name="amount" id="withdraw_amount">
+    <input type="hidden" name="provider" id="withdraw_provider">
+    <input type="hidden" name="phone" id="withdraw_phone">
+</form>
+
+<script>
+const paymentProviders = [
+    {% for provider in payment_providers %}
+    { code: "{{ provider.code }}", label: "{{ provider.label }}" }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+function renderProviderOptions() {
+    return paymentProviders.map((provider, index) => `
+        <button type="button"
+            class="provider-option ${index === 0 ? 'provider-active' : ''}"
+            onclick="selectSwalProvider('${provider.code}', this)">
+            ${provider.label}
+        </button>
+    `).join('');
+}
+
+function openWithdrawModal() {
+    const userPhone = "{{ user.phone_number|escapejs }}";
+    const defaultProvider = paymentProviders.length ? paymentProviders[0].code : "";
+
+    Swal.fire({
+        title: 'Demande de retrait',
+        html: `
+            <div style="text-align:left; margin-top:10px; display:flex; flex-direction:column; gap:1rem;">
+                <div style="background:rgba(86,213,181,0.1); border:1px solid rgba(86,213,181,0.2); padding:1rem; border-radius:1rem; text-align:center;">
+                    <label style="font-size:0.75rem; color:#8ef3d6; font-weight:700; margin-bottom:4px; display:block; letter-spacing:0.08em; text-transform:uppercase;">Gains disponibles</label>
+                    <div style="font-size:1.6rem; font-weight:800; color:#eef6ff;">{{ withdrawable_amount }} XOF</div>
+                    {% if pending_withdrawals and pending_withdrawals != 0 %}
+                    <div style="font-size:0.75rem; color:#ffd38d; margin-top:6px; font-weight:700;">
+                       <i class="ph-duotone ph-lock"></i> {{ pending_withdrawals }} XOF en traitement
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label style="font-size:0.75rem; color:#94a9c8; font-weight:700; margin-bottom:8px; display:block;">Mode de reception</label>
+                    <div style="display:grid; grid-template-columns:repeat(1, 1fr); gap:0.6rem;">
+                        ${renderProviderOptions()}
+                    </div>
+                </div>
+
+                <input type="hidden" id="swal-provider" value="${defaultProvider}">
+
+                <div>
+                    <label style="font-size:0.75rem; color:#94a9c8; font-weight:700; margin-bottom:4px; display:block;">Numero de reception</label>
+                    <div style="width:100%; background-color:#111b2d; border:1px solid rgba(172,197,228,0.14); color:#dbe9ff; border-radius:0.9rem; padding:0.9rem; font-size:0.92rem;">
+                        <i class="ph-fill ph-device-mobile"></i> ${userPhone}
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size:0.75rem; color:#94a9c8; font-weight:700; margin-bottom:4px; display:block;">Montant a retirer</label>
+                    <input type="number" id="swal-amount" class="field-control" placeholder="Ex: 5000" min="100">
+                </div>
+            </div>
+        `,
+        background: '#0d182b',
+        color: '#eef6ff',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#56d5b5',
+        cancelButtonColor: '#2b3a52',
+        reverseButtons: true,
+        didOpen: () => {
+            const style = document.createElement('style');
+            style.textContent = `
+                .provider-option {
+                    min-height: 2.9rem;
+                    border-radius: 0.95rem;
+                    border: 1px solid rgba(172,197,228,0.14);
+                    background: rgba(255,255,255,0.04);
+                    color: #eef6ff;
+                    font-weight: 700;
+                    cursor: pointer;
+                }
+                .provider-active {
+                    border-color: rgba(86,213,181,0.38);
+                    background: rgba(86,213,181,0.14);
+                    color: #8ef3d6;
+                }
+                .swal2-html-container .field-control {
+                    width: 100%;
+                    min-height: 3rem;
+                    border-radius: 0.95rem;
+                    border: 1px solid rgba(172,197,228,0.14);
+                    background: rgba(255,255,255,0.04);
+                    color: #eef6ff;
+                    padding: 0.85rem 1rem;
+                    outline: none;
+                }
+            `;
+            document.head.appendChild(style);
+        },
+        preConfirm: () => {
+            const amount = document.getElementById('swal-amount').value;
+            const provider = document.getElementById('swal-provider').value;
+            if (!provider) {
+                Swal.showValidationMessage('Aucun moyen de retrait disponible');
+                return false;
+            }
+            if (!amount || amount <= 0) {
+                Swal.showValidationMessage('Veuillez entrer un montant valide');
+                return false;
+            }
+            return { amount: amount, provider: provider, phone: userPhone };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('withdraw_amount').value = result.value.amount;
+            document.getElementById('withdraw_provider').value = result.value.provider;
+            document.getElementById('withdraw_phone').value = result.value.phone;
+            document.getElementById('withdrawForm').submit();
+        }
+    });
+}
+
+function selectSwalProvider(providerCode, element) {
+    document.getElementById('swal-provider').value = providerCode;
+    document.querySelectorAll('.provider-option').forEach(card => card.classList.remove('provider-active'));
+    element.classList.add('provider-active');
+}
+</script>
+{% endblock %}

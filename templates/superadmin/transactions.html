@@ -31,8 +31,7 @@
                     <td style="padding: 1rem;">{{ tx.created_at|date:"d M Y - H:i" }}</td>
                     <td style="padding: 1rem; font-weight: bold;">{{ tx.user.username }}</td>
                     <td style="padding: 1rem;">
-                        {% if tx.tx_type == 'PAY_INVEST' %}<span style="color: #3b82f6;"><i class="ph-bold ph-arrow-down"></i> Achat de palier</span>
-                        {% elif tx.tx_type == 'BOOSTER' %}<span style="color: #f97316;"><i class="ph-bold ph-rocket-launch"></i> Achat de booster</span>
+                        {% if tx.tx_type == 'PAY_INVEST' %}<span style="color: #3b82f6;"><i class="ph-bold ph-arrow-down"></i> Achat de categorie</span>
                         {% elif tx.tx_type == 'WITHDRAWAL' %}<span style="color: #ef4444;"><i class="ph-bold ph-arrow-up"></i> Retrait</span>
                         {% else %}<span style="color: #a855f7;">{{ tx.get_tx_type_display }}</span>{% endif %}
                         <br><small style="color: var(--sa-text-muted);">{{ tx.provider|default:"-" }} / {{ tx.tx_reference|default:"-" }}</small>

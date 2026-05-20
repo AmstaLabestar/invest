@@ -60,9 +60,9 @@
                 <span class="nav-icon"><i class="ph-duotone ph-chart-line-up"></i></span>
                 <span class="nav-label">Investir</span>
             </a>
-            <a href="{% url 'booster' %}" class="nav-item {% if request.resolver_match.url_name == 'booster' %}active{% endif %}" title="Parrainage & Retrait">
-                <span class="nav-icon"><i class="ph-duotone ph-rocket-launch"></i></span>
-                <span class="nav-label">Actions</span>
+            <a href="{% url 'actions' %}" class="nav-item {% if request.resolver_match.url_name == 'actions' %}active{% endif %}" title="Parrainage & Retrait">
+                <span class="nav-icon"><i class="ph-duotone ph-hand-withdraw"></i></span>
+                <span class="nav-label">Retrait</span>
             </a>
             <a href="{% url 'profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" title="Profil">
                 <span class="nav-icon"><i class="ph-duotone ph-user-circle"></i></span>

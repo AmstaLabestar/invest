@@ -1,32 +1,12 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from investments.models import Booster, InvestmentTier
+from investments.models import InvestmentTier
 from seed_tiers import TIERS
 
 
-BOOSTERS = [
-    {
-        'name': 'Booster Bronze',
-        'multiplier': 1.5,
-        'price': 2000,
-        'duration_days': 7,
-        'icon': 'ph ph-rocket',
-        'is_active': True,
-    },
-    {
-        'name': 'Turbo Flash',
-        'multiplier': 2.0,
-        'price': 5000,
-        'duration_days': 3,
-        'icon': 'ph ph-lightning',
-        'is_active': True,
-    },
-]
-
-
 class Command(BaseCommand):
-    help = 'Peuple la base de donnees avec le catalogue de categories et les boosters'
+    help = 'Peuple la base de donnees avec le catalogue de categories'
 
     def handle(self, *args, **kwargs):
         with transaction.atomic():
@@ -42,15 +22,4 @@ class Command(BaseCommand):
                 action = 'cree' if created else 'mis a jour'
                 self.stdout.write(f"- Categorie {tier.name} {action}")
 
-            self.stdout.write('Creation des boosters...')
-            for booster_data in BOOSTERS:
-                defaults = booster_data.copy()
-                name = defaults.pop('name')
-                booster, created = Booster.objects.update_or_create(
-                    name=name,
-                    defaults={'name': name, **defaults},
-                )
-                action = 'cree' if created else 'mis a jour'
-                self.stdout.write(f"- Booster {booster.name} {action}")
-
-        self.stdout.write(self.style.SUCCESS('Catalogue categories et boosters generes avec succes.'))
+        self.stdout.write(self.style.SUCCESS('Catalogue categories genere avec succes.'))

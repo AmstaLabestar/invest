@@ -90,30 +90,18 @@
                     <label class="field">
                         <span class="field-label">Moyen de paiement</span>
                         <select name="provider" x-model="paymentProvider" required class="field-control">
-                            <optgroup label="Mobile Money">
-                                <option value="Orange Money">Orange Money</option>
-                                <option value="Moov Money">Moov Money</option>
-                                <option value="Wave">Wave</option>
-                            </optgroup>
-                            <optgroup label="Cryptomonnaies">
-                                <option value="Solana (SOL)">Solana (SOL)</option>
-                                <option value="Celo (CUSD)">Celo (CUSD)</option>
-                                <option value="USDT (TRC20)">USDT (TRC20)</option>
-                            </optgroup>
+                            {% for provider in payment_providers %}
+                            <option value="{{ provider.code }}">{{ provider.label }}</option>
+                            {% endfor %}
                         </select>
                     </label>
 
-                    <label class="field" x-show="!isCrypto">
+                    <label class="field">
                         <span class="field-label">Numero de paiement</span>
                         <div class="field-prefix">
                             <span>+226</span>
-                            <input type="tel" name="phone" :required="!isCrypto" :disabled="isCrypto" placeholder="50 00 00 00" pattern="[0-9]{8}" maxlength="8">
+                            <input type="tel" name="phone" required placeholder="50 00 00 00" pattern="[0-9]{8}" maxlength="8">
                         </div>
-                    </label>
-
-                    <label class="field" x-show="isCrypto">
-                        <span class="field-label">Adresse portefeuille</span>
-                        <input type="text" name="phone" :required="isCrypto" :disabled="!isCrypto" placeholder="Adresse d'envoi..." class="field-control">
                     </label>
                 </div>
 
@@ -175,13 +163,8 @@ document.addEventListener('alpine:init', () => {
         activeTierROI: 0,
         activeTierCycle: 0,
         amount: 0,
-        paymentProvider: 'Orange Money',
+        paymentProvider: 'ORANGE_MONEY',
         chartInstance: null,
-        tickInterval: null,
-
-        get isCrypto() {
-            return this.paymentProvider.includes('Solana') || this.paymentProvider.includes('Celo') || this.paymentProvider.includes('USDT');
-        },
 
         initChart() {
             let initialized = false;
@@ -206,12 +189,7 @@ document.addEventListener('alpine:init', () => {
             gradient.addColorStop(0, 'rgba(86, 213, 181, 0.42)');
             gradient.addColorStop(1, 'rgba(86, 213, 181, 0)');
 
-            let currentPrice = 1.05;
-            const dataPts = [];
-            for (let i = 0; i < 40; i++) {
-                currentPrice = currentPrice + (Math.random() - 0.48) * 0.005;
-                dataPts.push(currentPrice);
-            }
+            const dataPts = this.buildProjectionData();
 
             this.chartInstance = new Chart(ctx, {
                 type: 'line',
@@ -240,7 +218,7 @@ document.addEventListener('alpine:init', () => {
                             intersect: false,
                             mode: 'index',
                             callbacks: {
-                                label: function(context) { return context.parsed.y.toFixed(5); }
+                                label: function(context) { return Number(context.parsed.y).toLocaleString('fr-FR') + ' XOF'; }
                             }
                         }
                     },
@@ -252,7 +230,7 @@ document.addEventListener('alpine:init', () => {
                             ticks: {
                                 font: { family: 'IBM Plex Sans', size: 10, weight: '700' },
                                 color: '#62748f',
-                                callback: function(value) { return value.toFixed(5); }
+                                callback: function(value) { return Number(value).toLocaleString('fr-FR'); }
                             },
                             border: { display: false }
                         }
@@ -261,15 +239,6 @@ document.addEventListener('alpine:init', () => {
                 }
             });
 
-            this.tickInterval = setInterval(() => {
-                if (!this.chartInstance) return;
-                const ds = this.chartInstance.data.datasets[0];
-                const lastVal = ds.data[ds.data.length - 1];
-                const newVal = lastVal + (Math.random() - 0.48) * 0.002;
-                ds.data.push(newVal);
-                ds.data.shift();
-                this.chartInstance.update();
-            }, 950);
         },
 
         selectTier(id, name, min, roi, cycle) {
@@ -284,15 +253,19 @@ document.addEventListener('alpine:init', () => {
             }
 
             if (this.chartInstance) {
-                let currentPrice = Math.random() * 5 + 0.5;
-                const dataPts = [];
-                for (let i = 0; i < 40; i++) {
-                    currentPrice = currentPrice + (Math.random() - 0.48) * (currentPrice * 0.005);
-                    dataPts.push(currentPrice);
-                }
-                this.chartInstance.data.datasets[0].data = dataPts;
+                this.chartInstance.data.datasets[0].data = this.buildProjectionData();
                 this.chartInstance.update();
             }
+        },
+
+        buildProjectionData() {
+            const points = [];
+            const days = Math.max(1, Number(this.activeTierCycle || 30));
+            const step = Math.max(1, Math.ceil(days / 40));
+            for (let day = 1; day <= days; day += step) {
+                points.push(Math.round(this.activeTierMin * this.activeTierROI * day));
+            }
+            return points.length ? points : [0];
         },
 
         formatMoney(val) {

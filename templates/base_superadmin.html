@@ -196,8 +196,11 @@
                 <a href="{% url 'admin_transactions' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_transactions' %}active{% endif %}">
                     <i class="ph-duotone ph-swap"></i> Transactions
                 </a>
+                <a href="{% url 'admin_support' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_support' or request.resolver_match.url_name == 'admin_support_edit' %}active{% endif %}">
+                    <i class="ph-duotone ph-headset"></i> Support
+                </a>
                 <a href="{% url 'admin_products' %}" class="sa-menu-item {% if request.resolver_match.url_name == 'admin_products' %}active{% endif %}">
-                    <i class="ph-duotone ph-package"></i> Produits & Boosters
+                    <i class="ph-duotone ph-package"></i> Categories
                 </a>
                 
                 <div class="sa-menu-label">Configuration</div>

@@ -1,68 +1,56 @@
 {% extends 'base_superadmin.html' %}
 
 {% block title %}SuperAdmin - InvestPlatform{% endblock %}
-{% block top_title %}Vue d'ensemble Analytique{% endblock %}
+{% block top_title %}Vue d'ensemble{% endblock %}
 
 {% block content %}
 <div style="max-width: 1200px; margin: 0 auto;">
-    
-    <!-- KPI PRINCIPAUX -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-        
-        <!-- CARTE 1: Trésorerie -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
         <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); border-top: 3px solid #eab308;">
-            <h2 class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--sa-text-muted);"><i class="ph-duotone ph-vault text-yellow-500"></i> Cashflow Réel Global</h2>
-            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div>
-                    <p class="text-3xl font-bold text-yellow-500">{{ treasury.net_real|floatformat:0 }} XOF</p>
-                    <p class="text-xs mt-1" style="color: #4ade80;"><i class="ph-duotone ph-trend-up"></i> +{{ treasury.real_deposits|floatformat:0 }} XOF entrées</p>
-                    <p class="text-xs text-red-500 mt-1"><i class="ph-duotone ph-trend-down"></i> -{{ treasury.real_withdrawals|floatformat:0 }} XOF sorties</p>
-                </div>
-            </div>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--sa-text-muted);">
+                <i class="ph-duotone ph-vault text-yellow-500"></i> Cashflow
+            </h2>
+            <p class="text-3xl font-bold text-yellow-500">{{ treasury.net_real|floatformat:0 }} XOF</p>
+            <p class="text-xs mt-1" style="color: #4ade80;">+{{ treasury.real_deposits|floatformat:0 }} XOF entrees</p>
+            <p class="text-xs text-red-500 mt-1">-{{ treasury.real_withdrawals|floatformat:0 }} XOF sorties</p>
         </div>
 
-        <!-- CARTE 2: Economie Virtuelle -->
         <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); border-top: 3px solid #3b82f6;">
-            <h2 class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--sa-text-muted);"><i class="ph-duotone ph-chart-pie-slice" style="color: #3b82f6;"></i> Économie de la plateforme</h2>
-             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div>
-                    <p class="text-xs mb-1" style="color: var(--sa-text-muted);">Total Investi (Actif)</p>
-                    <p class="text-2xl font-bold text-blue-400">{{ treasury.total_invested|floatformat:0 }} XOF</p>
-                    
-                    <p class="text-xs mb-1 mt-3" style="color: var(--sa-text-muted);">Soldes Virtuels Utilisateurs</p>
-                    <p class="text-lg font-bold" style="color: var(--sa-text);">{{ treasury.virtual_balance|floatformat:0 }} XOF</p>
-                </div>
-            </div>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--sa-text-muted);">
+                <i class="ph-duotone ph-chart-pie-slice" style="color: #3b82f6;"></i> Plateforme
+            </h2>
+            <p class="text-xs mb-1" style="color: var(--sa-text-muted);">Capital actif</p>
+            <p class="text-2xl font-bold text-blue-400">{{ treasury.total_invested|floatformat:0 }} XOF</p>
+            <p class="text-xs mb-1 mt-3" style="color: var(--sa-text-muted);">Soldes utilisateurs</p>
+            <p class="text-lg font-bold" style="color: var(--sa-text);">{{ treasury.virtual_balance|floatformat:0 }} XOF</p>
         </div>
 
-        <!-- CARTE 3: Croissance -->
         <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); border-top: 3px solid #22c55e;">
-            <h2 class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--sa-text-muted);"><i class="ph-duotone ph-users-three" style="color: #22c55e;"></i> Utilisateurs & Conversion</h2>
-             <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
-                <div style="text-align: center; width: 100%;">
-                    <p class="text-4xl font-bold mb-2" style="color: #4ade80;">{{ treasury.conversion_rate }}%</p>
-                    <p class="text-xs font-bold" style="color: var(--sa-text-muted);">Taux de conversion Inscrits / Déposants</p>
-                </div>
-            </div>
+            <h2 class="text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--sa-text-muted);">
+                <i class="ph-duotone ph-users-three" style="color: #22c55e;"></i> Conversion
+            </h2>
+            <p class="text-4xl font-bold mb-2" style="color: #4ade80;">{{ treasury.conversion_rate }}%</p>
+            <p class="text-xs font-bold" style="color: var(--sa-text-muted);">Inscrits / deposants</p>
         </div>
     </div>
-    
-    <!-- GRAPHIQUES (7 Jours) -->
+
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-        <!-- Cashflow Chart -->
         <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);"><i class="ph-duotone ph-chart-line-up text-blue-500 mr-2"></i> Évolution du Cashflow (7 Derniers Jours)</h2>
+                <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+                    <i class="ph-duotone ph-chart-line-up text-blue-500 mr-2"></i> Cashflow 7 jours
+                </h2>
             </div>
             <div style="height: 300px; width: 100%;">
                 <canvas id="cashflowChart"></canvas>
             </div>
         </div>
-        
-        <!-- User Acquisition Chart -->
+
         <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);"><i class="ph-duotone ph-users text-emerald-500 mr-2"></i> Nouvelles Inscriptions</h2>
+                <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+                    <i class="ph-duotone ph-users text-emerald-500 mr-2"></i> Inscriptions
+                </h2>
             </div>
             <div style="height: 300px; width: 100%;">
                 <canvas id="usersChart"></canvas>
@@ -70,72 +58,47 @@
         </div>
     </div>
 
-    <!-- GRID SECONDAIRE -->
     <div class="sa-secondary-grid">
-        <!-- AUDIT LOGS -->
         <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);"><i class="ph-duotone ph-shield text-purple-500 mr-2"></i> Activité d'administration</h2>
-                <span class="text-xs" style="color: var(--sa-text-muted);">Dernières actions</span>
+                <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+                    <i class="ph-duotone ph-shield text-purple-500 mr-2"></i> Activite admin
+                </h2>
+                <span class="text-xs" style="color: var(--sa-text-muted);">Dernieres actions</span>
             </div>
-            
+
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 {% for log in audit_logs %}
                 <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; background: var(--sa-hover); border-radius: 0.5rem; border-left: 3px solid {% if log.severity == 'INFO' %}#10b981{% elif log.severity == 'WARNING' %}#eab308{% else %}#ef4444{% endif %};">
                     <div style="flex-grow: 1;">
                         <p class="text-sm font-bold mb-1" style="color: var(--sa-text);">{{ log.action }}</p>
-                        <p class="text-xs" style="color: var(--sa-text-muted);">
-                            <i class="ph ph-user"></i> {{ log.admin_user.username }} &nbsp;&bull;&nbsp;
-                            <i class="ph ph-clock"></i> {{ log.created_at|date:"d M Y - H:i" }} &nbsp;&bull;&nbsp;
-                            <i class="ph ph-globe"></i> {{ log.ip_address|default:"IP Web" }}
-                        </p>
+                        <p class="text-xs" style="color: var(--sa-text-muted);">{{ log.admin_user.username }} - {{ log.created_at|date:"d M Y - H:i" }}</p>
                     </div>
                 </div>
                 {% empty %}
                 <div style="padding: 2rem; text-align: center; background: var(--sa-hover); border-radius: 0.5rem; color: var(--sa-text-muted);">
-                    <i class="ph-duotone ph-shield-check text-3xl mb-2 opacity-50" style="color: #10b981;"></i>
-                    <p class="text-sm">Aucune activité d'administration critique enregistrée récemment.</p>
+                    <p class="text-sm">Aucune activite recente.</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
-        
-        <!-- RESUME PRODUITS -->
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            <!-- CARD PRODUITS -->
-            <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);"><i class="ph-duotone ph-package text-blue-400 mr-2"></i> Paliers Actifs</h2>
-                    <a href="{% url 'admin_products' %}" class="text-xs text-blue-500 hover:text-blue-400">Gérer</a>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    {% for p in tiers|slice:":4" %}
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--sa-hover); border-radius: 0.25rem;">
-                        <span class="text-sm" style="color: var(--sa-text);">{{ p.badge|default:'🌟' }} {{ p.name }}</span>
-                        {% if p.is_active %}<span class="text-xs font-bold" style="color: #22c55e;">ON</span>{% else %}<span class="text-xs font-bold text-red-500">OFF</span>{% endif %}
-                    </div>
-                    {% empty %}
-                    <p class="text-xs italic" style="color: var(--sa-text-muted);">Aucun palier configuré.</p>
-                    {% endfor %}
-                </div>
+
+        <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+                    <i class="ph-duotone ph-package text-blue-400 mr-2"></i> Categories actives
+                </h2>
+                <a href="{% url 'admin_products' %}" class="text-xs text-blue-500 hover:text-blue-400">Gerer</a>
             </div>
-            
-            <!-- CARD BOOSTERS -->
-            <div class="card p-5" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border);">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);"><i class="ph-duotone ph-rocket mr-2" style="color: #fb923c;"></i> Boosters</h2>
-                    <a href="{% url 'admin_products' %}" class="text-xs" style="color: #fb923c;">Gérer</a>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for p in tiers|slice:":8" %}
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--sa-hover); border-radius: 0.25rem;">
+                    <span class="text-sm" style="color: var(--sa-text);">{{ p.badge|default:'+' }} {{ p.name }}</span>
+                    {% if p.is_active %}<span class="text-xs font-bold" style="color: #22c55e;">ON</span>{% else %}<span class="text-xs font-bold text-red-500">OFF</span>{% endif %}
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    {% for b in boosters|slice:":3" %}
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--sa-hover); border-radius: 0.25rem;">
-                        <span class="text-sm" style="color: var(--sa-text);"><i class="{{ b.icon }} mr-1" style="color: #fb923c;"></i> {{ b.name }}</span>
-                        <span class="text-xs font-bold" style="color: var(--sa-text);">x{{ b.multiplier }}</span>
-                    </div>
-                    {% empty %}
-                    <p class="text-xs italic" style="color: var(--sa-text-muted);">Aucun booster disponible.</p>
-                    {% endfor %}
-                </div>
+                {% empty %}
+                <p class="text-xs italic" style="color: var(--sa-text-muted);">Aucune categorie configuree.</p>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -143,90 +106,50 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
-        
-        // 1. Cashflow Chart (Line)
-        const ctxCashflow = document.getElementById('cashflowChart').getContext('2d');
-        new Chart(ctxCashflow, {
-            type: 'line',
-            data: {
-                labels: chartData.labels,
-                datasets: [
-                    {
-                        label: 'Dépôts (Entrées)',
-                        data: chartData.deposits,
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'Retraits (Sorties)',
-                        data: chartData.withdrawals,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans', size: 12 } }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#9ca3af' }
-                    }
-                }
-            }
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
 
-        // 2. Users Chart (Bar)
-        const ctxUsers = document.getElementById('usersChart').getContext('2d');
-        new Chart(ctxUsers, {
-            type: 'bar',
-            data: {
-                labels: chartData.labels,
-                datasets: [{
-                    label: 'Inscrits',
-                    data: chartData.users,
-                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
+    new Chart(document.getElementById('cashflowChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [
+                {
+                    label: 'Depots',
+                    data: chartData.deposits,
+                    borderColor: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#9ca3af', stepSize: 1 }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#9ca3af' }
-                    }
+                {
+                    label: 'Retraits',
+                    data: chartData.withdrawals,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
                 }
-            }
-        });
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
     });
+
+    new Chart(document.getElementById('usersChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Inscrits',
+                data: chartData.users,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderRadius: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+});
 </script>
 {% endblock %}

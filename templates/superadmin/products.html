@@ -1,79 +1,41 @@
 {% extends 'base_superadmin.html' %}
 
-{% block title %}SuperAdmin - Produits & Boosters{% endblock %}
-{% block top_title %}Gestion Produits & Boosters{% endblock %}
+{% block title %}SuperAdmin - Categories{% endblock %}
+{% block top_title %}Gestion des categories{% endblock %}
 
 {% block content %}
-<div class="sa-secondary-grid">
-
-    <!-- PRODUITS -->
-    <div class="card p-0" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); overflow: hidden;">
-        <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
-                <i class="ph-duotone ph-package mr-2" style="color: #a855f7;"></i> Catalogue Paliers VIP
-            </h2>
-            <a href="/admin/investments/investmenttier/" target="_blank" class="text-xs" style="color: #a855f7; text-decoration: underline;">Édition Avancée</a>
-        </div>
-        
-        <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-            {% for p in tiers %}
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--sa-hover); border-radius: 0.5rem; border-left: 3px solid {% if p.is_active %}#22c55e{% else %}#ef4444{% endif %};">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 0.5rem; background: rgba(168,85,247,0.1); display: flex; align-items: center; justify-content: center; color: #a855f7; font-size: 1.5rem;">
-                        <span>{{ p.badge|default:'🌟' }}</span>
-                    </div>
-                    <div>
-                        <p style="color: var(--sa-text); font-weight: bold; margin: 0;">{{ p.name }}</p>
-                        <p style="color: var(--sa-text-muted); font-size: 0.75rem; margin: 0;">Mise min: {{ p.min_amount|floatformat:0 }} XOF • ROI: {{ p.daily_rate_percentage|floatformat:2 }} % /j • {{ p.cycle_days }} jours</p>
-                    </div>
-                </div>
-                <div>
-                    <form action="{% url 'admin_product_toggle' p.id %}" method="POST" style="margin: 0;">
-                        {% csrf_token %}
-                        {% if p.is_active %}
-                            <button type="submit" class="btn" style="background: var(--sa-danger-bg); color: var(--sa-danger-text); border-radius: 0.25rem; padding: 0.4rem 0.8rem; border: none; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Mettre Hors-Ligne</button>
-                        {% else %}
-                            <button type="submit" class="btn" style="background: var(--sa-success-bg); color: var(--sa-success-text); border-radius: 0.25rem; padding: 0.4rem 0.8rem; border: none; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Mettre En Ligne</button>
-                        {% endif %}
-                    </form>
-                </div>
-            </div>
-            {% empty %}
-            <p style="color: var(--sa-text-muted); text-align: center;">Aucun palier n'existe dans la base.</p>
-            {% endfor %}
-        </div>
+<div class="card p-0" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); overflow: hidden;">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
+            <i class="ph-duotone ph-package mr-2" style="color: #a855f7;"></i> Catalogue
+        </h2>
+        <a href="/admin/investments/investmenttier/" target="_blank" class="text-xs" style="color: #a855f7; text-decoration: underline;">Edition avancee</a>
     </div>
 
-    <!-- BOOSTERS -->
-    <div class="card p-0" style="background: var(--sa-card-bg); border: 1px solid var(--sa-border); overflow: hidden;">
-        <div style="padding: 1.5rem; border-bottom: 1px solid var(--sa-border); display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="text-sm font-bold uppercase tracking-widest" style="color: var(--sa-text);">
-                <i class="ph-duotone ph-rocket mr-2" style="color: #fb923c;"></i> Boosters Actuels
-            </h2>
-            <a href="/admin/investments/booster/" target="_blank" class="text-xs" style="color: #fb923c; text-decoration: underline;">Édition Avancée</a>
-        </div>
-        
-        <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-            {% for b in boosters %}
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--sa-hover); border-radius: 0.5rem; border-left: 3px solid {% if b.is_active %}#22c55e{% else %}#ef4444{% endif %};">
-                <div>
-                    <p style="color: #fbbf24; font-weight: bold; margin: 0;">{{ b.name }} (x{{ b.multiplier }})</p>
-                    <p style="color: var(--sa-text-muted); font-size: 0.75rem; margin: 0;">Prix: {{ b.price|floatformat:0 }} XOF • {{ b.duration_days }} jours</p>
+    <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+        {% for p in tiers %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--sa-hover); border-radius: 0.5rem; border-left: 3px solid {% if p.is_active %}#22c55e{% else %}#ef4444{% endif %};">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; border-radius: 0.5rem; background: rgba(168,85,247,0.1); display: flex; align-items: center; justify-content: center; color: #a855f7; font-size: 1rem; font-weight: 800;">
+                    <span>{{ p.badge|default:'+' }}</span>
                 </div>
                 <div>
-                    {% if b.is_active %}
-                        <span style="color: var(--sa-success-text); font-size: 0.75rem; font-weight: bold;">ACTIF</span>
-                    {% else %}
-                        <span style="color: var(--sa-danger-text); font-size: 0.75rem; font-weight: bold;">INACTIF</span>
-                    {% endif %}
+                    <p style="color: var(--sa-text); font-weight: bold; margin: 0;">{{ p.name }}</p>
+                    <p style="color: var(--sa-text-muted); font-size: 0.75rem; margin: 0;">Min: {{ p.min_amount|floatformat:0 }} XOF - ROI: {{ p.daily_rate_percentage|floatformat:2 }} % /j - {{ p.cycle_days }} jours</p>
                 </div>
             </div>
-            {% empty %}
-            <p style="color: var(--sa-text-muted); text-align: center;">Aucun booster n'existe dans la base.</p>
-            {% endfor %}
-            <p class="text-xs text-center" style="color: var(--sa-text-muted); margin-top: 1rem;">* L'activation / désactivation des boosters se fait via l'édition avancée.</p>
+            <form action="{% url 'admin_product_toggle' p.id %}" method="POST" style="margin: 0;">
+                {% csrf_token %}
+                {% if p.is_active %}
+                    <button type="submit" class="btn" style="background: var(--sa-danger-bg); color: var(--sa-danger-text); border-radius: 0.25rem; padding: 0.4rem 0.8rem; border: none; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Mettre hors ligne</button>
+                {% else %}
+                    <button type="submit" class="btn" style="background: var(--sa-success-bg); color: var(--sa-success-text); border-radius: 0.25rem; padding: 0.4rem 0.8rem; border: none; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Mettre en ligne</button>
+                {% endif %}
+            </form>
         </div>
+        {% empty %}
+        <p style="color: var(--sa-text-muted); text-align: center;">Aucune categorie disponible.</p>
+        {% endfor %}
     </div>
-
 </div>
 {% endblock %}
