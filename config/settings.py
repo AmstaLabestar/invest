@@ -102,6 +102,11 @@ elif os.getenv('POSTGRES_HOST'):
         }
     }
 else:
+    if IS_PRODUCTION:
+        raise RuntimeError(
+            "DATABASE_URL is required when DJANGO_DEBUG=False. "
+            "Refusing to run production with a non-persistent SQLite database."
+        )
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
