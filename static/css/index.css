@@ -1801,6 +1801,83 @@ body.landing-page {
 .text-gray-500,
 .text-gray-600 { color: var(--text-tertiary); }
 .text-white { color: var(--text-primary); }
+
+body:not(.theme-light) :is(
+  .card,
+  .glass-panel,
+  .card-dark,
+  .metric-card,
+  .detail-block,
+  .chart-panel,
+  .control-panel,
+  .quick-action,
+  .tree-card,
+  .link-card,
+  .menu-item,
+  .notice-card,
+  .landing-nav,
+  .landing-orbit-card,
+  .landing-section,
+  .landing-final-card,
+  .landing-feature-card,
+  .landing-flow div,
+  .landing-tier-list article,
+  .landing-trust-row span,
+  .landing-balance
+) {
+  color: var(--text-primary);
+}
+
+body:not(.theme-light) :is(
+  .chart-title,
+  .control-panel h3,
+  .portfolio-title,
+  .list-title,
+  .detail-block strong,
+  .quick-action h4,
+  .menu-item-title,
+  .landing-feature-card h3,
+  .landing-tier-list strong,
+  .landing-flow span,
+  .landing-balance strong
+) {
+  color: var(--text-primary);
+}
+
+body:not(.theme-light) :is(
+  .text-muted,
+  .text-gray-400,
+  .text-gray-500,
+  .text-gray-600,
+  .field-label,
+  .mini-label,
+  .section-label,
+  .section-meta,
+  .chart-kicker,
+  .menu-item-subtitle,
+  .landing-muted,
+  .landing-feature-card p,
+  .landing-final-card p,
+  .landing-tier-list small,
+  .landing-balance span,
+  .landing-trust-row span
+) {
+  color: #c9d8ec;
+}
+
+body:not(.theme-light) :is(
+  .field-control,
+  .form-input,
+  .field input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+  .field select,
+  .field textarea,
+  .auth-card input[type="text"],
+  .auth-card input[type="password"],
+  .auth-card input[type="email"],
+  .auth-card input[type="number"]
+)::placeholder {
+  color: #9fb2ce;
+}
 .mt-1 { margin-top: 0.25rem; }
 .mt-2 { margin-top: 0.5rem; }
 .mt-4 { margin-top: 1rem; }
