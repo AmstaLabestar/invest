@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>InvestPlatform - Partenariat e-commerce</title>
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=landing_v1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.min.css">
+    <script>
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('theme-light');
+            window.addEventListener('DOMContentLoaded', () => { document.body.classList.add('theme-light'); });
+        }
+    </script>
+</head>
+<body class="landing-page">
+    <main class="landing-shell">
+        <nav class="landing-nav">
+            <a href="{% url 'home' %}" class="landing-brand" aria-label="InvestPlatform">
+                <span class="landing-brand-mark"><i class="ph-bold ph-storefront"></i></span>
+                <span>InvestPlatform</span>
+            </a>
+            <a href="{% url 'login' %}" class="landing-nav-link">Connexion</a>
+        </nav>
+
+        <section class="landing-hero">
+            <div class="landing-hero-copy">
+                <div class="hero-eyebrow">Partenariat e-commerce</div>
+                <h1>Rejoignez une activité commerciale structurée, suivie depuis votre mobile.</h1>
+                <p>
+                    InvestPlatform connecte nos clients à une activité d’achat en gros, d’importation
+                    et de distribution de produits à forte demande sur plusieurs marchés africains.
+                </p>
+
+                <div class="landing-actions">
+                    <a href="{% url 'register' %}" class="btn btn-primary landing-cta">
+                        <i class="ph-bold ph-user-plus"></i>
+                        Créer un compte
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-secondary landing-cta">
+                        <i class="ph-bold ph-sign-in"></i>
+                        Se connecter
+                    </a>
+                </div>
+
+                <div class="landing-trust-row">
+                    <span><i class="ph-bold ph-shield-check"></i> Espace sécurisé</span>
+                    <span><i class="ph-bold ph-device-mobile"></i> Mobile Money</span>
+                    <span><i class="ph-bold ph-chart-line-up"></i> Suivi en temps réel</span>
+                </div>
+            </div>
+
+            <aside class="landing-orbit-card">
+                <div class="orbit-glow"></div>
+                <div class="landing-card-top">
+                    <span class="status-pill success">Actif</span>
+                    <span class="mini-label">Vue mobile</span>
+                </div>
+                <div class="landing-balance">
+                    <span>Volume mensuel</span>
+                    <strong>200-300M FCFA</strong>
+                </div>
+                <div class="landing-flow">
+                    <div><i class="ph-bold ph-package"></i><span>Achat en gros</span></div>
+                    <div><i class="ph-bold ph-airplane-takeoff"></i><span>Approvisionnement</span></div>
+                    <div><i class="ph-bold ph-truck"></i><span>Distribution</span></div>
+                    <div><i class="ph-bold ph-wallet"></i><span>Suivi client</span></div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="landing-section">
+            <div class="section-heading mb-4">
+                <div>
+                    <div class="section-label">
+                        <i class="ph-duotone ph-compass"></i>
+                        Expérience
+                    </div>
+                    <h2>Simple à comprendre, fluide à utiliser.</h2>
+                </div>
+            </div>
+
+            <div class="landing-feature-grid">
+                <article class="landing-feature-card">
+                    <i class="ph-duotone ph-storefront"></i>
+                    <h3>Activité e-commerce</h3>
+                    <p>Une organisation centrée sur l’achat, l’importation et la revente de produits physiques.</p>
+                </article>
+                <article class="landing-feature-card">
+                    <i class="ph-duotone ph-handshake"></i>
+                    <h3>Partenariat client</h3>
+                    <p>Chaque client dispose d’un espace pour suivre ses souscriptions, gains et demandes.</p>
+                </article>
+                <article class="landing-feature-card">
+                    <i class="ph-duotone ph-credit-card"></i>
+                    <h3>Mobile Money</h3>
+                    <p>Les paiements et retraits sont préparés pour Orange Money, Moov Money et Telecel Money.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="landing-section landing-split">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-squares-four"></i>
+                    Catégories
+                </div>
+                <h2>Choisissez une catégorie adaptée à votre capacité.</h2>
+                <p class="landing-muted">
+                    Les catégories permettent d’organiser les souscriptions, les règles de gains et le suivi des opérations.
+                </p>
+                <a href="{% url 'public_stats' %}" class="landing-inline-link">Voir les statistiques publiques</a>
+            </div>
+
+            <div class="landing-tier-list">
+                {% for tier in featured_tiers %}
+                <article>
+                    <span>{{ tier.badge|default:'+' }}</span>
+                    <div>
+                        <strong>{{ tier.name }}</strong>
+                        <small>À partir de {{ tier.min_amount|floatformat:0 }} FCFA</small>
+                    </div>
+                    <em>+{{ tier.daily_rate_percentage|floatformat:0 }}%</em>
+                </article>
+                {% empty %}
+                <article>
+                    <span>+</span>
+                    <div>
+                        <strong>Catalogue en préparation</strong>
+                        <small>Les catégories seront disponibles bientôt.</small>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="landing-final-card">
+            <div>
+                <div class="section-label">
+                    <i class="ph-duotone ph-lock-key"></i>
+                    Accès privé
+                </div>
+                <h2>Déjà prêt à commencer ?</h2>
+                <p>Créez votre compte ou connectez-vous pour accéder à votre espace personnel.</p>
+            </div>
+            <div class="landing-actions compact">
+                <a href="{% url 'register' %}" class="btn btn-primary landing-cta">Créer un compte</a>
+                <a href="{% url 'login' %}" class="btn btn-secondary landing-cta">Se connecter</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -19,32 +19,11 @@
         <section class="auth-card">
             <div class="auth-header">
                 <div class="auth-logo">
-                    <i class="ph-bold ph-chart-line-up"></i>
+                    <i class="ph-bold ph-lock-key"></i>
                 </div>
                 <div class="hero-eyebrow">Connexion securisee</div>
-                <h1 class="auth-title">Reprenez la main sur votre espace.</h1>
-                <p class="auth-copy">Accedez a votre espace InvestPlatform.</p>
-            </div>
-
-            <div class="service-intro">
-                <div class="service-intro-title">Participez a la croissance du e-commerce africain.</div>
-                <p class="service-intro-copy">
-                    Nous achetons des produits en grande quantite en Chine et dans plusieurs pays, puis nous les revendons a travers une grande partie de l'Afrique avec des societes de livraison reconnues.
-                </p>
-                <div class="service-points">
-                    <div class="service-point">
-                        <i class="ph-bold ph-package"></i>
-                        <span>Volume mensuel estime entre 200 et 300 millions FCFA.</span>
-                    </div>
-                    <div class="service-point">
-                        <i class="ph-bold ph-trend-up"></i>
-                        <span>Demande en constante augmentation.</span>
-                    </div>
-                    <div class="service-point">
-                        <i class="ph-bold ph-handshake"></i>
-                        <span>Plateforme creee pour ouvrir des partenariats et partager les retombees de nos activites.</span>
-                    </div>
-                </div>
+                <h1 class="auth-title">Accédez à votre espace.</h1>
+                <p class="auth-copy">Suivez vos souscriptions, gains, retraits et parrainages.</p>
             </div>
 
             <form method="POST" action="{% url 'login' %}" class="form-stack">
@@ -74,7 +53,7 @@
                 Nouveau sur InvestPlatform ?
                 <a href="{% url 'register' %}" class="auth-link">Creer un compte</a>
                 <br>
-                <a href="{% url 'public_stats' %}" class="auth-link">Voir les statistiques</a>
+                <a href="{% url 'home' %}" class="auth-link">Retour a l'accueil</a>
             </div>
         </section>
     </main>

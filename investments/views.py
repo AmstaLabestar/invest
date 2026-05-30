@@ -77,8 +77,15 @@ def unread_notifications_count(request):
     return JsonResponse({'count': count})
 
 
-@login_required(login_url='/login/')
 def home(request):
+    if not request.user.is_authenticated:
+        featured_tiers = InvestmentTier.objects.filter(is_active=True).order_by('level')[:4]
+        total_members = User.objects.filter(is_active=True).count()
+        return render(request, 'landing.html', {
+            'featured_tiers': featured_tiers,
+            'total_members': total_members,
+        })
+
     user = request.user
     active_invs = Investment.objects.filter(user=user, status=Investment.Status.ACTIVE)
     invested_total = WalletService.get_total_invested_capital(user)

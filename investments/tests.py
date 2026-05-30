@@ -834,10 +834,17 @@ class ClientJourneySmokeTests(TestCase):
         )
 
     def test_public_auth_pages_render(self):
-        for route_name in ("login", "register", "public_stats"):
+        for route_name in ("home", "login", "register", "public_stats"):
             with self.subTest(route=route_name):
                 response = self.client.get(reverse(route_name))
                 self.assertEqual(response.status_code, 200)
+
+    def test_public_home_renders_landing_for_visitors(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Partenariat e-commerce")
+        self.assertContains(response, "Créer un compte")
 
     def test_register_flow_creates_client_and_opens_home(self):
         response = self.client.post(
