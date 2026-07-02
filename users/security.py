@@ -34,7 +34,7 @@ class OTPService:
             raise ValueError("User email is required for OTP")
 
         send_mail(
-            subject="Code de securite InvestPlatform",
+            subject="Code de securite NOVARIS",
             message=f"Votre code de securite est : {code}. Il expire dans 10 minutes.",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],

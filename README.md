@@ -1,4 +1,4 @@
-# InvestPlatform
+# NOVARIS
 
 Plateforme web Django permettant aux utilisateurs de creer un compte, souscrire a une categorie d'investissement, suivre leurs gains, demander des retraits et parrainer d'autres utilisateurs.
 
