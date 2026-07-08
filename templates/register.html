@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Créer un compte - NOVARIS</title>
-    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=prod_ui_v1">
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=auth_ui_v2">
     {% include 'includes/icon_assets.html' %}
     <script>
         if (localStorage.getItem('theme') === 'light') {
@@ -15,34 +15,40 @@
     </script>
 </head>
 <body class="auth-page">
+    <div class="auth-ambient auth-ambient-one"></div>
+    <div class="auth-ambient auth-ambient-two"></div>
     <main class="auth-shell">
-        <section class="auth-card">
+        <section class="auth-card auth-card-register">
+            <div class="auth-brand-row">
+                <a href="{% url 'home' %}" class="auth-brand" aria-label="NOVARIS">
+                    <span class="auth-brand-mark"><i class="ph-bold ph-storefront"></i></span>
+                    <span>NOVARIS</span>
+                </a>
+                <a href="{% url 'login' %}" class="auth-mini-link">Connexion</a>
+            </div>
+
             <div class="auth-header">
                 <div class="auth-logo">
                     <i class="ph-bold ph-user-plus"></i>
                 </div>
                 <div class="hero-eyebrow">Ouverture de compte</div>
-                <h1 class="auth-title">Creer un compte NOVARIS.</h1>
-                <p class="auth-copy">Renseignez vos informations pour ouvrir votre espace.</p>
+                <h1 class="auth-title">Ouvrez votre espace NOVARIS.</h1>
+                <p class="auth-copy">Un espace mobile pour suivre vos souscriptions, gains et operations.</p>
             </div>
 
             <div class="service-intro">
-                <div class="service-intro-title">Une plateforme de partenariat adossee au e-commerce.</div>
-                <p class="service-intro-copy">
-                    Notre activite repose sur l'achat en gros, l'approvisionnement international et la revente de produits sur plusieurs marches africains.
-                </p>
                 <div class="service-points">
                     <div class="service-point">
                         <i class="ph-bold ph-storefront"></i>
-                        <span>Specialisation 100 % e-commerce.</span>
+                        <span>E-commerce</span>
                     </div>
                     <div class="service-point">
                         <i class="ph-bold ph-truck"></i>
-                        <span>Distribution avec des partenaires de livraison reconnus.</span>
+                        <span>Distribution</span>
                     </div>
                     <div class="service-point">
                         <i class="ph-bold ph-users-three"></i>
-                        <span>Opportunite de beneficier des retombees de nos activites.</span>
+                        <span>Partenariat</span>
                     </div>
                 </div>
             </div>
@@ -66,19 +72,32 @@
                 {% endif %}
 
                 {% for field in form %}
-                <label class="field">
+                <label class="field auth-field">
                     <span class="field-label">
                         {{ field.label }}
                         {% if field.field.required %}<span style="color:#ff9cac;">*</span>{% endif %}
                     </span>
 
                     {% if field.name == 'phone_number' %}
-                    <div class="field-prefix">
+                    <div class="field-prefix auth-phone-wrap">
                         <span>+226</span>
                         {{ field }}
                     </div>
                     {% else %}
-                    {{ field }}
+                    <span class="auth-input-wrap">
+                        {% if field.name == 'first_name' or field.name == 'last_name' %}
+                        <i class="ph-bold ph-identification-card"></i>
+                        {% elif field.name == 'email' %}
+                        <i class="ph-bold ph-envelope"></i>
+                        {% elif field.name == 'username' %}
+                        <i class="ph-bold ph-user-circle"></i>
+                        {% elif field.name == 'password1' or field.name == 'password2' %}
+                        <i class="ph-bold ph-lock-key"></i>
+                        {% else %}
+                        <i class="ph-bold ph-sparkle"></i>
+                        {% endif %}
+                        {{ field }}
+                    </span>
                     {% endif %}
 
                     {% if field.name == 'password' or field.name == 'password1' %}
@@ -97,10 +116,9 @@
                 </button>
             </form>
 
-            <div class="auth-footer">
-                Vous avez deja un compte ?
+            <div class="auth-footer auth-footer-card">
+                <span>Vous avez deja un compte ?</span>
                 <a href="{% url 'login' %}" class="auth-link">Se connecter</a>
-                <br>
                 <a href="{% url 'public_stats' %}" class="auth-link">Voir les statistiques</a>
             </div>
         </section>

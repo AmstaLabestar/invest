@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Connexion - NOVARIS</title>
-    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=prod_ui_v1">
+    <link rel="stylesheet" href="{% static 'css/index.css' %}?v=auth_ui_v2">
     {% include 'includes/icon_assets.html' %}
     <script>
         if (localStorage.getItem('theme') === 'light') {
@@ -15,15 +15,25 @@
     </script>
 </head>
 <body class="auth-page">
+    <div class="auth-ambient auth-ambient-one"></div>
+    <div class="auth-ambient auth-ambient-two"></div>
     <main class="auth-shell">
-        <section class="auth-card">
+        <section class="auth-card auth-card-login">
+            <div class="auth-brand-row">
+                <a href="{% url 'home' %}" class="auth-brand" aria-label="NOVARIS">
+                    <span class="auth-brand-mark"><i class="ph-bold ph-storefront"></i></span>
+                    <span>NOVARIS</span>
+                </a>
+                <span class="auth-secure-badge"><i class="ph-bold ph-shield-check"></i> Securise</span>
+            </div>
+
             <div class="auth-header">
                 <div class="auth-logo">
                     <i class="ph-bold ph-lock-key"></i>
                 </div>
                 <div class="hero-eyebrow">Connexion securisee</div>
-                <h1 class="auth-title">Accédez à votre espace.</h1>
-                <p class="auth-copy">Suivez vos souscriptions, gains, retraits et parrainages.</p>
+                <h1 class="auth-title">Retrouvez votre espace NOVARIS.</h1>
+                <p class="auth-copy">Vos souscriptions, gains, retraits et parrainages restent accessibles depuis votre mobile.</p>
             </div>
 
             <form method="POST" action="{% url 'login' %}" class="form-stack">
@@ -33,14 +43,20 @@
                 <div class="alert-box error">{{ error }}</div>
                 {% endif %}
 
-                <label class="field">
+                <label class="field auth-field">
                     <span class="field-label">Identifiant</span>
-                    <input type="text" name="username" required placeholder="Pseudo, telephone ou email" class="field-control">
+                    <span class="auth-input-wrap">
+                        <i class="ph-bold ph-user-circle"></i>
+                        <input type="text" name="username" required placeholder="Pseudo, telephone ou email" class="field-control" autocomplete="username">
+                    </span>
                 </label>
 
-                <label class="field">
+                <label class="field auth-field">
                     <span class="field-label">Mot de passe</span>
-                    <input type="password" name="password" required placeholder="Entrez votre mot de passe" class="field-control">
+                    <span class="auth-input-wrap">
+                        <i class="ph-bold ph-lock-key"></i>
+                        <input type="password" name="password" required placeholder="Entrez votre mot de passe" class="field-control" autocomplete="current-password">
+                    </span>
                 </label>
 
                 <button type="submit" class="btn btn-primary">
@@ -49,11 +65,14 @@
                 </button>
             </form>
 
-            <div class="auth-footer">
-                Nouveau sur NOVARIS ?
+            <div class="auth-trust-strip">
+                <span><i class="ph-bold ph-device-mobile"></i> Mobile first</span>
+                <span><i class="ph-bold ph-wallet"></i> Mobile Money</span>
+            </div>
+
+            <div class="auth-footer auth-footer-card">
+                <span>Nouveau sur NOVARIS ?</span>
                 <a href="{% url 'register' %}" class="auth-link">Creer un compte</a>
-                <br>
-                <a href="{% url 'home' %}" class="auth-link">Retour a l'accueil</a>
             </div>
         </section>
     </main>
