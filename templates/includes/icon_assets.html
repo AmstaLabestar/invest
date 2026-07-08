@@ -1,0 +1,41 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.min.css">
+<script>
+    (function () {
+        function phosphorReady() {
+            var probe = document.createElement('i');
+            probe.className = 'ph-bold ph-house';
+            probe.style.position = 'absolute';
+            probe.style.opacity = '0';
+            probe.style.pointerEvents = 'none';
+            document.body.appendChild(probe);
+            var content = window.getComputedStyle(probe, '::before').getPropertyValue('content');
+            document.body.removeChild(probe);
+            return content && content !== 'none' && content !== 'normal' && content !== '""';
+        }
+
+        function loadFallbackIcons() {
+            if (document.querySelector('link[data-phosphor-fallback="true"]')) {
+                return;
+            }
+
+            ['regular', 'bold', 'duotone', 'fill'].forEach(function (styleName) {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.dataset.phosphorFallback = 'true';
+                link.href = 'https://unpkg.com/@phosphor-icons/web@2.1.1/src/' + styleName + '/style.css';
+                document.head.appendChild(link);
+            });
+        }
+
+        window.addEventListener('load', function () {
+            window.setTimeout(function () {
+                if (!phosphorReady()) {
+                    loadFallbackIcons();
+                }
+            }, 700);
+        });
+    })();
+</script>

@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NOVARIS - Partenariat e-commerce</title>
     <link rel="stylesheet" href="{% static 'css/index.css' %}?v=landing_v1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.min.css">
+    {% include 'includes/icon_assets.html' %}
     <script>
         if (localStorage.getItem('theme') === 'light') {
             document.documentElement.classList.add('theme-light');
